@@ -8,45 +8,51 @@
 import Foundation
 import SwiftUI
 import Vision
+import Photos
 
 struct ImageWithBoundingBoxesView: View {
-    let photo: ImageFile
-    @Binding var toggleNormalize: Bool
+    @EnvironmentObject var dataSource : DataSource
+    @ObservedObject var imgFile: ImageFile
     @Binding var showRect: Bool
+    @State var image : UIImage? = nil
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-               
-                if !toggleNormalize {
-                 Image(uiImage: photo.thumbnail)
+        ZStack {
+            if let image = image {
+                Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()   
-                }
-                ForEach(0..<photo.bbox.count, id: \.self) { index in
-                    let box = photo.bbox[index]
-                    let adjustedBox = adjustBoundingBox(box, forImageSize: photo.thumbnail.size, orientation: photo.thumbnail.imageOrientation)
-                    let normalizedBox = CGRect(
-                        x: adjustedBox.minX / photo.thumbnail.size.width,
-                        y: adjustedBox.minY / photo.thumbnail.size.height,
-                        width: adjustedBox.width / photo.thumbnail.size.width,
-                        height: adjustedBox.height / photo.thumbnail.size.height
+                    .frame(
+                        width: 100,
+                        height: 100
                     )
-                    if toggleNormalize {
-                        NormalizedFaceView(photo: photo, boundingBox: adjustedBox)
-                            .frame(width: 112, height: 112)
-                            .position(x: geometry.size.width * normalizedBox.midX, y: geometry.size.height * (normalizedBox.midY - normalizedBox.height / 2 - 60))
-                    } else if showRect {
-                        Rectangle()
-                        .stroke(Color.green, lineWidth: 2)
-                        .frame(width: geometry.size.width * normalizedBox.width, height: geometry.size.height * normalizedBox.height)
-                        .position(x: geometry.size.width * normalizedBox.midX, y: geometry.size.height * normalizedBox.midY)
-                    }
-                }
+                    .clipped()
+            } else {
+                Rectangle().foregroundColor(.gray).aspectRatio(1, contentMode: .fit)
+                ProgressView()
             }
+            
         }
+        .task {
+            await loadImageAsset()
+        }
+        // up from the memory
+        .onDisappear {
+            image = nil
+        }
+        
+    }
+    
+    func loadImageAsset(
+        targetSize: CGSize = PHImageManagerMaximumSize
+    ) async {
+        guard let uiImage = try? await dataSource.fetchImage(
+            asset: imgFile.asset, targetSize: targetSize
+        ) else {
+            image = nil
+            return
+        }
+        image = uiImage
     }
 }
 
@@ -54,10 +60,7 @@ struct ImageWithBoundingBoxesView: View {
 func adjustBoundingBox(_ boundingBox: CGRect, forImageSize imageSize: CGSize, orientation: UIImage.Orientation) -> CGRect {
     let scaleFactorX: CGFloat = 1.2
     let scaleFactorY: CGFloat = 1.9
-
-
     var adjustedBox: CGRect
-    
     switch orientation {
     case .up, .upMirrored:
         // No adjustment needed
@@ -99,53 +102,23 @@ func adjustBoundingBox(_ boundingBox: CGRect, forImageSize imageSize: CGSize, or
     
     return clampedBox
 }
-struct NormalizedFaceView: View {
-    let photo: ImageFile
-    let boundingBox: CGRect
-    
-    var body: some View {
-        if let cgImage = photo.rawImg,
-           let croppedFace = extractFacePixels(cgImage, boundingBox),
-           let normalizedFace = resizeAndCenterCrop(croppedFace) {
-            Image(uiImage: normalizedFace)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 112, height: 112)
-                .clipped()
-        }
-    }
-    
-    private func extractFacePixels(_ image: CGImage, _ boundingBox: CGRect) -> CGImage? {
-        guard let cgImage = image.cropping(to: boundingBox) else {
-            return nil
-        }
-        return cgImage
-    }
-    
-    private func resizeAndCenterCrop(_ image: CGImage) -> UIImage? {
-        let targetSize = CGSize(width: 112, height: 112)
-        
-        let imageWidth = image.width
-        let imageHeight = image.height
-        
-        let scaleFactor = max(targetSize.width / CGFloat(imageWidth), targetSize.height / CGFloat(imageHeight))
-        
-        let resizedSize = CGSize(width: CGFloat(imageWidth) * scaleFactor, height: CGFloat(imageHeight) * scaleFactor)
-        
-        let xOffset = (resizedSize.width - targetSize.width) / 2.0
-        let yOffset = (resizedSize.height - targetSize.height) / 2.0
-        
-        UIGraphicsBeginImageContextWithOptions(targetSize, false, 0.0)
-        
-        let context = UIGraphicsGetCurrentContext()
-        context?.interpolationQuality = .high
-        
-        let rect = CGRect(x: -xOffset, y: -yOffset, width: resizedSize.width, height: resizedSize.height)
-        context?.draw(image, in: rect)
-        
-        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        print(normalizedImage)
-        return normalizedImage
-    }
-}
+
+/*
+ ForEach(0..<photo.bbox.count, id: \.self) { index in
+ let box = photo.bbox[index]
+ let adjustedBox = adjustBoundingBox(box, forImageSize: photo.thumbnail.size, orientation: photo.thumbnail.imageOrientation)
+ let normalizedBox = CGRect(
+ x: adjustedBox.minX / photo.thumbnail.size.width,
+ y: adjustedBox.minY / photo.thumbnail.size.height,
+ width: adjustedBox.width / photo.thumbnail.size.width,
+ height: adjustedBox.height / photo.thumbnail.size.height
+ )
+ if toggleNormalize {
+ } else if showRect {
+ Rectangle()
+ .stroke(Color.green, lineWidth: 2)
+ .frame(width: geometry.size.width * normalizedBox.width, height: geometry.size.height * normalizedBox.height)
+ .position(x: geometry.size.width * normalizedBox.midX, y: geometry.size.height * normalizedBox.midY)
+ }
+ }
+ */

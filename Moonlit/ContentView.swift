@@ -5,24 +5,21 @@ import CoreML
 
 struct FaceDetectionGalleryView: View {
     @ObservedObject public var data = DataSource()
-    @State var normalize = false
+    @State var loaded = false
     @State var showRect = false
     var done = false
     var body: some View {
         VStack {
-            if data.selectedPhotos.isEmpty {
+            if !loaded {
                 ProgressView("Detecting faces...")
                     .onAppear {
+                        print("requesting access...")
                         requestPhotoLibraryAccess()
                     }
             } else {
                 VStack{
                     Button("Filter by person") {
-                        filterByPerson()
-                    }
-                    Button("Normalize") {
-                        normalize.toggle()
-                        print(normalize)
+                       // filterByPerson()
                     }
                     Button("Show Bbox") {
                         showRect.toggle()
@@ -30,22 +27,24 @@ struct FaceDetectionGalleryView: View {
                     }
                     .padding()
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 4) {
+                        
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 2) {
                             ForEach(0..<data.selectedPhotos.count, id: \.self) { index in
-                                let photo = data.selectedPhotos[index]
-                                ImageWithBoundingBoxesView(photo: photo, toggleNormalize: $normalize, showRect: $showRect)
-                                    .frame(width: 112, height: 112)
+                                let imgFile = data.selectedPhotos[index]
+                                ImageWithBoundingBoxesView(imgFile: imgFile, showRect: $showRect)
+                                    .frame(width: 100, height: 100)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 0)
-                                            .stroke(photo.isTapped ? .red : .clear, lineWidth: photo.isTapped ? 4 : 0)
+                                            .stroke(imgFile.isTapped ? .red : .clear, lineWidth: imgFile.isTapped ? 4 : 0)
                                     )
                                     .onTapGesture {
                                         data.selectedPhotos[index].isTapped.toggle()
-                                    }
+                                }
+                                    .environmentObject(data)
+                           
                             }
                         }
                         .onAppear {
-                            loadHighQualityImages()
                         }
                     }
                 }
@@ -56,13 +55,16 @@ struct FaceDetectionGalleryView: View {
     private func requestPhotoLibraryAccess() {
         PHPhotoLibrary.requestAuthorization { status in
             if status == .authorized {
-                data.loadData(completion: {})
+                data.loadAll(completion: {
+                   loaded = true
+                })
             } else {
             }
         }
     }
     
     // TODO load higher qual image in background thread while person is selecting
+    /*
     private func filterByPerson() {
         do {
             guard let facenet = try? FaceNet() else {return}
@@ -166,6 +168,7 @@ struct FaceDetectionGalleryView: View {
             // Handle any errors
         }
     }
+     */
     
     private func extractFacePixels(_ image: CGImage, _ boundingBox: CGRect) -> CGImage? {
         guard let cgImage = image.cropping(to: boundingBox) else {
@@ -196,18 +199,18 @@ struct FaceDetectionGalleryView: View {
         DispatchQueue.global(qos: .background).async {
             for (index, photo) in data.selectedPhotos.enumerated() {
                 if !photo.isHighQuality {
+                    /*
                     getHighQualityImage(for: photo.asset) { highQualityImage in
                         DispatchQueue.main.async {
                             if let highQualityImage = highQualityImage {
-                                if let adjustIdx = data.selectedPhotos.firstIndex(where: {$0.name == photo.name}) {
-                                 data.selectedPhotos[adjustIdx].thumbnail = highQualityImage
-                                data.selectedPhotos[adjustIdx].rawImg = highQualityImage.cgImage
+                                if let adjustIdx = data.selected[photo.name] {
+                                 //data.selectedPhotos[adjustIdx].thumbnail = highQualityImage
+                                //data.selectedPhotos[adjustIdx].rawImg = highQualityImage.cgImage
                                 data.selectedPhotos[adjustIdx].isHighQuality = true
-                                
                                 }
                             }
                         }
-                    }
+                    }*/
                 }
             }
         }

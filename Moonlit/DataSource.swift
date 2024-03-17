@@ -16,73 +16,68 @@ struct DistanceImagePair {
     let imageFile: ImageFile
 }
 
-public struct ImageFile: Hashable, Identifiable {
-    public var id = UUID()
-    let url: String
-    var thumbnail: UIImage
-    let name: String
+public class ImageFile: ObservableObject {
     let asset: PHAsset
-    let bbox: [CGRect]
-    var rawImg: CGImage? = nil
+    let url: URL
+    let name: String
+    let bbox: [CGRect]? = nil
     var isTapped: Bool = false
     var isHighQuality = false
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(asset.localIdentifier)
+    
+    init(asset: PHAsset, url: URL, name: String) {
+        self.asset = asset
+        self.url = url
+        self.name = name
     }
     
-    public static func == (lhs: ImageFile, rhs: ImageFile) -> Bool {
-        return lhs.asset.localIdentifier == rhs.asset.localIdentifier
-    }
-    
- 
 }
 
 class DataSource: ObservableObject {
-    @Published var selectedPhotos = [String: ImageFile]()
+    @Published var selectedPhotos = [ImageFile]()
+    @Published var selected = [String:Int]()
+    var imageCachingManager = PHCachingImageManager()
+    //var fetchResult: PHFetchResult<PHAsset>
     
-    func loadData(completion: @escaping () -> Void) {
+   // let batchSize = 50
+    //var loadedPhotos = [ImageFile]()
+    var selectedPhotosMemorySize: Double {
+            let imageFileSize = MemoryLayout<ImageFile>.size
+            let bytes = selectedPhotos.count * imageFileSize
+            return Double(bytes) / (1024 * 1024)
+    }
+
+    func loadAll(completion: @escaping () -> Void) {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 100
+        fetchOptions.fetchLimit = 1000
         let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        
         fetchResult.enumerateObjects { asset, index, _ in
-            self.getImageFromAsset(asset) { ciImage in
-                guard let ciImage = ciImage else { return }
-                self.detectFace(img: ciImage) { img, rect in
-                    if let faceImg = img {
-                        self.assessQuality(img: faceImg) { qualImg in
-                            if let qualImg = qualImg {
-                                self.getPhoto(from: asset) { photo, asset in
-                                    if let photo = photo {
-                                        let imageFile = ImageFile(url: asset.localIdentifier, thumbnail: photo, name: asset.value(forKey: "filename") as? String ?? "", asset: asset, bbox: rect)
-                                        DispatchQueue.main.async {
-                                            /*
-                                            if !self.selectedPhotos.contains(where: {$0.name == imageFile.name}) {
-                                                self.selectedPhotos.append(imageFile)
-                                            } else {
-                                                print("DUPE detected")
-                                            }
-                                             */
-                                        }
-
-                                    } else {
-                                        print("could not getPhoto")
-                                    }
-                                }
-                                
-                            }
-                        }
-                    }
-                }
-            }
-            
+            self.getAssetURL(asset) { url in
+                   if let url = url {
+                       self.detectFace(url: url) { url, rect in
+                           guard let url = url else {return}
+                           self.assessQuality(url: url) { url in
+                               guard let url = url else {return}
+                               let imageFile = ImageFile(asset: asset, url: url,  name: asset.value(forKey: "filename") as? String ?? "" )
+                                   DispatchQueue.main.async {
+                                       if self.selected[imageFile.name] == nil {
+                                           self.selectedPhotos.append(imageFile)
+                                           self.selected[imageFile.name] = self.selectedPhotos.count - 1
+                                       }
+                               }
+                           }
+                       }
+                   } else {
+                       print("could not get asset URL")
+                   }
+               }
         }
         completion()
     }
    
     // also return bounding box
-    private func detectFace(img: CIImage, completion: @escaping (CIImage?,[CGRect]) -> Void) {
+    private func detectFace(url: URL, completion: @escaping (URL?,[CGRect]) -> Void) {
         let faceDetectionRequest = VNDetectFaceRectanglesRequest { request, error in
             guard let results = request.results as? [VNFaceObservation], !results.isEmpty else {
                 completion(nil, [])
@@ -101,32 +96,31 @@ class DataSource: ObservableObject {
                 return boundingBox
             }
             
-            completion(img, boxes)
+            completion(url, boxes)
         }
         
         faceDetectionRequest.revision = VNDetectFaceRectanglesRequestRevision3
-        sendRequest(in: img, with: faceDetectionRequest)
+        sendRequest(in: url, with: faceDetectionRequest)
     }
     
-    private func assessQuality(img: CIImage, completion: @escaping (CIImage?) -> Void) {
+    private func assessQuality(url: URL, completion: @escaping (URL?) -> Void) {
         let faceQualityRequest = VNDetectFaceCaptureQualityRequest {request, error in
             guard let results = request.results as? [VNFaceObservation], !results.isEmpty else {
                 completion(nil)
                 return
             }
-            
             let faceQuals = results.compactMap{$0.faceCaptureQuality}
             if let highest = faceQuals.max(), highest < 0.95 {
                 completion(nil)
             }                
-            completion(img)
+            completion(url)
         }
         faceQualityRequest.revision = VNDetectFaceCaptureQualityRequestRevision3
-        sendRequest(in: img, with: faceQualityRequest)
+        sendRequest(in: url, with: faceQualityRequest)
     }
     
-    private func sendRequest(in ciImage: CIImage, with request: VNImageBasedRequest) {
-        let handler = VNImageRequestHandler(ciImage: ciImage, options: [:])
+    private func sendRequest(in url: URL, with request: VNImageBasedRequest) {
+        let handler = VNImageRequestHandler(url: url, options: [:])
         do {
             try handler.perform([request])
         } catch {
@@ -134,36 +128,56 @@ class DataSource: ObservableObject {
         }
     }
     
-    private func getPhoto(from asset: PHAsset, completion: @escaping (UIImage?, PHAsset) -> Void) {
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .opportunistic
-        //options.isNetworkAccessAllowed = true
-        //options.isSynchronous = true
-        PHImageManager.default().requestImage(for: asset, targetSize: .init(width: asset.pixelWidth, height: asset.pixelHeight), contentMode: .default, options: options) { photo, _ in
-            DispatchQueue.main.async {
-                completion(photo, asset)
+    func getAssetURL(_ asset: PHAsset, completion: @escaping (URL?) -> Void) {
+        let options = PHContentEditingInputRequestOptions()
+        options.canHandleAdjustmentData = { _ in true }
+        options.isNetworkAccessAllowed = true
+        
+        asset.requestContentEditingInput(with: options) { (contentEditingInput, info) in
+            guard let contentEditingInput = contentEditingInput else {
+                completion(nil)
+                return
             }
+            completion(contentEditingInput.fullSizeImageURL)
         }
     }
     
-    private func getImageFromAsset(_ asset: PHAsset, completion: @escaping (CIImage?) -> Void) {
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .opportunistic
-        let assetSz = CGSize(width: asset.pixelWidth, height: asset.pixelHeight)
-        PHImageManager.default().requestImage(for: asset, targetSize: assetSz, contentMode: .aspectFit, options: options) { image, info in
-            if let image = image {
-                let ciImage = CIImage(image: image)
-                let isDegraded = info?[PHImageResultIsDegradedKey] as? Bool ?? false
-                print("degraded: \(isDegraded)")
-                //print(isDegraded)
-                completion(ciImage)
-            } else {
-                print("no img")
-                completion(nil)
-            }
-        }
-    }
-
+    public func fetchImage(
+        asset: PHAsset,
+        targetSize: CGSize = CGSize(width: 100, height: 100),
+           contentMode: PHImageContentMode = .default
+       ) async throws -> UIImage? {
+           let results = PHAsset.fetchAssets(
+            withLocalIdentifiers: [asset.localIdentifier],
+               options: nil
+           )
+           guard let asset = results.firstObject else {
+               print("asset not found")
+               throw PHPhotosError(.invalidResource)
+           }
+           let options = PHImageRequestOptions()
+           options.deliveryMode = .fastFormat
+           options.resizeMode = .fast
+           options.isNetworkAccessAllowed = true
+           options.isSynchronous = false
+           return try await withCheckedThrowingContinuation { [weak self] continuation in
+               /// Use the imageCachingManager to fetch the image
+               self?.imageCachingManager.requestImage(
+                   for: asset,
+                   targetSize: targetSize,
+                   contentMode: contentMode,
+                   options: options,
+                   resultHandler: { image, info in
+                       /// image is of type UIImage
+                       if let error = info?[PHImageErrorKey] as? Error {
+                           continuation.resume(throwing: error)
+                           return
+                       }
+                       continuation.resume(returning: image)
+                   }
+               )
+           }
+       }
 }
 
 
