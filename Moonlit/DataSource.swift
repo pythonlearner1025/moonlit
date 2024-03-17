@@ -11,13 +11,22 @@ import Photos
 import UIKit
 import CoreGraphics
 
-public struct ImageFile: Hashable {
+struct DistanceImagePair {
+    let distance: Float
+    let imageFile: ImageFile
+}
+
+public struct ImageFile: Hashable, Identifiable {
+    public var id = UUID()
     let url: String
-    let thumbnail: UIImage
+    var thumbnail: UIImage
     let name: String
     let asset: PHAsset
     let bbox: [CGRect]
-    
+    var rawImg: CGImage? = nil
+    var isTapped: Bool = false
+    var isHighQuality = false
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(asset.localIdentifier)
     }
@@ -26,24 +35,17 @@ public struct ImageFile: Hashable {
         return lhs.asset.localIdentifier == rhs.asset.localIdentifier
     }
     
-    public func thumbnailWithBoundingBoxes() -> UIImage? {
-        // Draw bounding boxes on the thumbnail
-        return thumbnail.drawBoundingBoxes(boundingBoxes: self.bbox, originalImg: thumbnail)
-    }
+ 
 }
 
-
-class DataSource {
-    private var imageFiles = [ImageFile]()
-    private var imageIndexWithFaces = IndexSet()
+class DataSource: ObservableObject {
+    @Published var selectedPhotos = [String: ImageFile]()
     
-    func loadData(completion: @escaping () -> Void, addFile: @escaping (ImageFile) -> Void) {
+    func loadData(completion: @escaping () -> Void) {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 500
-        
+        fetchOptions.fetchLimit = 100
         let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
-        
         fetchResult.enumerateObjects { asset, index, _ in
             self.getImageFromAsset(asset) { ciImage in
                 guard let ciImage = ciImage else { return }
@@ -54,9 +56,16 @@ class DataSource {
                                 self.getPhoto(from: asset) { photo, asset in
                                     if let photo = photo {
                                         let imageFile = ImageFile(url: asset.localIdentifier, thumbnail: photo, name: asset.value(forKey: "filename") as? String ?? "", asset: asset, bbox: rect)
-                                        self.imageFiles.append(imageFile)
-                                        self.imageIndexWithFaces.insert(index)
-                                        addFile(imageFile)
+                                        DispatchQueue.main.async {
+                                            /*
+                                            if !self.selectedPhotos.contains(where: {$0.name == imageFile.name}) {
+                                                self.selectedPhotos.append(imageFile)
+                                            } else {
+                                                print("DUPE detected")
+                                            }
+                                             */
+                                        }
+
                                     } else {
                                         print("could not getPhoto")
                                     }
@@ -108,10 +117,8 @@ class DataSource {
             
             let faceQuals = results.compactMap{$0.faceCaptureQuality}
             if let highest = faceQuals.max(), highest < 0.95 {
-                print("skipping \(highest)")
                 completion(nil)
             }                
-            print("keeping \(faceQuals)")
             completion(img)
         }
         faceQualityRequest.revision = VNDetectFaceCaptureQualityRequestRevision3
@@ -129,20 +136,26 @@ class DataSource {
     
     private func getPhoto(from asset: PHAsset, completion: @escaping (UIImage?, PHAsset) -> Void) {
         let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        //options.isNetworkAccessAllowed = true
         //options.isSynchronous = true
-        PHImageManager.default().requestImage(for: asset, targetSize: CGSize(width: 500, height: 500), contentMode: .aspectFit, options: options) { photo, _ in
-            completion(photo, asset)
+        PHImageManager.default().requestImage(for: asset, targetSize: .init(width: asset.pixelWidth, height: asset.pixelHeight), contentMode: .default, options: options) { photo, _ in
+            DispatchQueue.main.async {
+                completion(photo, asset)
+            }
         }
     }
     
-    
     private func getImageFromAsset(_ asset: PHAsset, completion: @escaping (CIImage?) -> Void) {
         let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
         let assetSz = CGSize(width: asset.pixelWidth, height: asset.pixelHeight)
         PHImageManager.default().requestImage(for: asset, targetSize: assetSz, contentMode: .aspectFit, options: options) { image, info in
             if let image = image {
                 let ciImage = CIImage(image: image)
                 let isDegraded = info?[PHImageResultIsDegradedKey] as? Bool ?? false
+                print("degraded: \(isDegraded)")
+                //print(isDegraded)
                 completion(ciImage)
             } else {
                 print("no img")
@@ -150,15 +163,7 @@ class DataSource {
             }
         }
     }
-    
-    var numberOfImages: Int {
-        return imageIndexWithFaces.count
-    }
-    
-    func imageFile(at index: Int) -> ImageFile {
-        let imageIndex = imageIndexWithFaces[imageIndexWithFaces.index(imageIndexWithFaces.startIndex, offsetBy: index)]
-        return imageFiles[index]
-    }
+
 }
 
 

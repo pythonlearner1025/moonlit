@@ -1,29 +1,210 @@
 import SwiftUI
 import Vision
 import Photos
+import CoreML
 
 struct FaceDetectionGalleryView: View {
-    @State private var selectedPhotos = [ImageFile]()
-    private var dataModel = DataSource()
+    @ObservedObject public var data = DataSource()
+    @State var normalize = false
+    @State var showRect = false
     var done = false
-    
     var body: some View {
         VStack {
-            if selectedPhotos.isEmpty {
+            if data.selectedPhotos.isEmpty {
                 ProgressView("Detecting faces...")
                     .onAppear {
                         requestPhotoLibraryAccess()
                     }
             } else {
-                ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 4) {
-                        ForEach(selectedPhotos, id: \.self) { photo in
-                            if let bboxThumbnail = photo.thumbnailWithBoundingBoxes() {
-                             Image(uiImage: bboxThumbnail)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 100, height: 100)
-                                .clipped()   
+                VStack{
+                    Button("Filter by person") {
+                        filterByPerson()
+                    }
+                    Button("Normalize") {
+                        normalize.toggle()
+                        print(normalize)
+                    }
+                    Button("Show Bbox") {
+                        showRect.toggle()
+                        print(showRect)
+                    }
+                    .padding()
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 4) {
+                            ForEach(0..<data.selectedPhotos.count, id: \.self) { index in
+                                let photo = data.selectedPhotos[index]
+                                ImageWithBoundingBoxesView(photo: photo, toggleNormalize: $normalize, showRect: $showRect)
+                                    .frame(width: 112, height: 112)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 0)
+                                            .stroke(photo.isTapped ? .red : .clear, lineWidth: photo.isTapped ? 4 : 0)
+                                    )
+                                    .onTapGesture {
+                                        data.selectedPhotos[index].isTapped.toggle()
+                                    }
+                            }
+                        }
+                        .onAppear {
+                            loadHighQualityImages()
+                        }
+                    }
+                }
+            }
+        }
+    }
+        
+    private func requestPhotoLibraryAccess() {
+        PHPhotoLibrary.requestAuthorization { status in
+            if status == .authorized {
+                data.loadData(completion: {})
+            } else {
+            }
+        }
+    }
+    
+    // TODO load higher qual image in background thread while person is selecting
+    private func filterByPerson() {
+        do {
+            guard let facenet = try? FaceNet() else {return}
+            var request: VNCoreMLRequest?
+            var tapped = data.selectedPhotos.filter({ $0.isTapped })
+
+            // Do this just once:
+            let dataType = MLMultiArrayDataType.float32
+            var faceEmbed = try MLMultiArray(shape: [1,512], dataType: dataType)
+            var mult = try MLMultiArray(shape: [1, 512], dataType: dataType)
+            // Set all values to zero
+            for i in 0..<faceEmbed.count {
+                faceEmbed[i] = NSNumber(floatLiteral: 0.0)
+                mult[i] = NSNumber(floatLiteral: Double(1.0/Double(tapped.count)))
+            }
+            
+            // avg req
+            if let visionModel = try? VNCoreMLModel(for: facenet.model) {
+              request = VNCoreMLRequest(model: visionModel) { request, error in
+                if let observations = request.results as? [VNCoreMLFeatureValueObservation ] {
+                  // do stuff
+                     var embed = observations[0].featureValue.multiArrayValue!
+                     faceEmbed = mat_add(faceEmbed, mat_mul(embed, mult))
+                }
+                  if error != nil {
+                      print("printing error:")
+                      print(error)
+                  }
+              }
+            }
+            // Specify additional options:
+            request!.imageCropAndScaleOption = .centerCrop
+            for img in tapped {
+                for bbox in img.bbox {
+                    let bbox = adjustBoundingBox(bbox, forImageSize: img.thumbnail.size, orientation: img.thumbnail.imageOrientation)
+
+                    if let rawimg = img.rawImg {
+                        guard let face = extractFacePixels(rawimg, bbox) else {continue}
+                        //print("requesting prediction on \(img.name)")
+                        let handler = VNImageRequestHandler(cgImage: face)
+                        try? handler.perform([request!])
+                    }
+                }
+            }
+            var dists: [DistanceImagePair] = []
+            var duplicates : [DistanceImagePair] = []
+            var request2: VNCoreMLRequest?
+            // make a second request
+            for img in data.selectedPhotos {
+                if img.isTapped { 
+                    print(img.name)
+                    continue
+                }
+                for bbox in img.bbox {
+                    let bbox = adjustBoundingBox(bbox, forImageSize: img.thumbnail.size, orientation: img.thumbnail.imageOrientation)
+
+                    //var dx = CGFloat(min(bbox.width, bbox.height) * 0.2)
+                   // var bbox = bbox.insetBy(dx: dx, dy: dx)
+                    if let rawimg = img.rawImg {
+                        guard let face = extractFacePixels(rawimg, bbox) else { continue }
+                        if let visionModel = try? VNCoreMLModel(for: facenet.model) {
+                            request2 = VNCoreMLRequest(model: visionModel) { request, error in
+                                if let observations = request.results as? [VNCoreMLFeatureValueObservation] {
+                                    // calculate dist
+                                    let embed = observations[0].featureValue.multiArrayValue!
+                                    let diff = mat_sub(faceEmbed, embed)
+                                    let squaredDiff = mat_mul(diff,diff)
+                                    let distance = mat_sum(squaredDiff)
+                                    let pair = DistanceImagePair(distance: distance, imageFile: img)
+                                    if dists.contains(where: {$0.imageFile.name == img.name}) {
+                                        duplicates.append(pair)
+                                    } else {
+                                        dists.append(pair)
+                                    }
+                                   // print("prediction on \(img.name)")
+                                   print(distance)
+                                }
+                                
+                                if error != nil {
+                                    print("printing error:")
+                                }
+                            }
+                        }
+                        request2!.imageCropAndScaleOption = .centerCrop
+                        let handler = VNImageRequestHandler(cgImage: face)
+                        try? handler.perform([request2!])
+                    }
+                }
+            }
+            
+            dists.sort(by: { $0.distance < $1.distance })
+            data.selectedPhotos = dists.map { $0.imageFile }
+            print(duplicates.map{$0.imageFile.name})
+            for idx in 0..<data.selectedPhotos.count{
+                if data.selectedPhotos[idx].isTapped {
+                    data.selectedPhotos[idx].isTapped = false
+                }
+            }
+            
+        } catch {
+            // Handle any errors
+        }
+    }
+    
+    private func extractFacePixels(_ image: CGImage, _ boundingBox: CGRect) -> CGImage? {
+        guard let cgImage = image.cropping(to: boundingBox) else {
+            return nil
+        }
+        return cgImage
+    }
+    
+    private func getHighQualityImage(for asset: PHAsset, completion: @escaping (UIImage?) -> Void) {
+        let options = PHImageRequestOptions()
+        //TODO temporary
+        //completion(nil)
+        
+        options.deliveryMode = .highQualityFormat
+        options.isNetworkAccessAllowed = true
+        options.isSynchronous = false
+        let assetSize = CGSize(width: asset.pixelWidth, height: asset.pixelHeight)
+        PHImageManager.default().requestImage(for: asset, targetSize: assetSize, contentMode: .aspectFit, options: options) { image, _ in
+            if let image = image {
+                completion(image)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+    
+    private func loadHighQualityImages() {
+        DispatchQueue.global(qos: .background).async {
+            for (index, photo) in data.selectedPhotos.enumerated() {
+                if !photo.isHighQuality {
+                    getHighQualityImage(for: photo.asset) { highQualityImage in
+                        DispatchQueue.main.async {
+                            if let highQualityImage = highQualityImage {
+                                if let adjustIdx = data.selectedPhotos.firstIndex(where: {$0.name == photo.name}) {
+                                 data.selectedPhotos[adjustIdx].thumbnail = highQualityImage
+                                data.selectedPhotos[adjustIdx].rawImg = highQualityImage.cgImage
+                                data.selectedPhotos[adjustIdx].isHighQuality = true
+                                
+                                }
                             }
                         }
                     }
@@ -31,91 +212,4 @@ struct FaceDetectionGalleryView: View {
             }
         }
     }
-    
-    private func requestPhotoLibraryAccess() {
-        PHPhotoLibrary.requestAuthorization { status in
-            if status == .authorized {
-                dataModel.loadData(completion: {
-                }, addFile: { imgFile in
-                    // Check if the image is already in the list
-                    if let existingIndex = selectedPhotos.firstIndex(where: { $0.asset == imgFile.asset}) {
-                          selectedPhotos[existingIndex] = imgFile
-                      } else {
-                          selectedPhotos.append(imgFile)
-                      }
-                })
-            } else {
-            }
-        }
-    }
-    
 }
-
-extension UIImage {
-    func drawBoundingBoxes(boundingBoxes: [CGRect], originalImg: UIImage) -> UIImage? {
-        //TODO adjust bounding box here
-        
-        // Begin a graphics context of sufficient size
-        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-        
-        // Draw original image into the context
-        draw(at: CGPoint.zero)
-        
-        // Get the context for CoreGraphics
-        guard let context = UIGraphicsGetCurrentContext() else { return nil }
-        
-        // Set the stroke color and line width
-        context.setStrokeColor(UIColor.red.cgColor)
-        context.setLineWidth(2.0)
-        
-        // Add rectangles for each bounding box
-        for box in boundingBoxes {
-            var box = adjustBoundingBox(box, forImageSize: originalImg.size, orientation: originalImg.imageOrientation)
-            context.addRect(box)
-        }
-        // Perform drawing operation
-        context.strokePath()
-        
-        // Capture the new image
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        
-        // End the graphics context
-        UIGraphicsEndImageContext()
-        
-        return newImage
-    }
-    
- 
-}
-
-func adjustBoundingBox(_ boundingBox: CGRect, forImageSize imageSize: CGSize, orientation: UIImage.Orientation) -> CGRect {
-    switch orientation {
-    case .up, .upMirrored:
-        // No adjustment needed
-        return CGRect(x: boundingBox.minX * imageSize.width,
-                      y: (1 - boundingBox.maxY) * imageSize.height, // Adjust Y-axis
-                      width: boundingBox.width * imageSize.width,
-                      height: boundingBox.height * imageSize.height)
-    case .down, .downMirrored:
-        // Rotate 180 degrees
-        return CGRect(x: (1 - boundingBox.maxX) * imageSize.width,
-                      y: boundingBox.minY * imageSize.height, // Adjust Y-axis
-                      width: boundingBox.width * imageSize.width,
-                      height: boundingBox.height * imageSize.height)
-    case .left, .leftMirrored:
-        // Rotate 90 degrees CCW
-        return CGRect(x: boundingBox.minY * imageSize.width,
-                      y: boundingBox.minX * imageSize.height, // Adjust Y-axis
-                      width: boundingBox.height * imageSize.width,
-                      height: boundingBox.width * imageSize.height)
-    case .right, .rightMirrored:
-        // Rotate 90 degrees CW
-        return CGRect(x: (1 - boundingBox.maxY) * imageSize.width,
-                      y: (1 - boundingBox.maxX) * imageSize.height, // Adjust Y-axis
-                      width: boundingBox.height * imageSize.width,
-                      height: boundingBox.width * imageSize.height)
-    @unknown default:
-        // Fallback for future orientations
-        return boundingBox
-    }
-    }
