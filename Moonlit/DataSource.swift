@@ -16,69 +16,108 @@ struct DistanceImagePair {
     let imageFile: ImageFile
 }
 
-public class ImageFile: ObservableObject {
+public class ImageFile: ObservableObject, Hashable {
     let asset: PHAsset
     let url: URL
     let name: String
-    let bbox: [CGRect]? = nil
-    var isTapped: Bool = false
+    let bbox: [CGRect]
+    @Published var isTapped: Bool = false
     var isHighQuality = false
+    var rawImg: UIImage? = nil
+    @Published var selected: Bool = false
+    @Published var dist : Double? = nil
     
-    init(asset: PHAsset, url: URL, name: String) {
+    init(asset: PHAsset, url: URL, name: String, bbox: [CGRect]) {
         self.asset = asset
         self.url = url
         self.name = name
+        self.bbox = bbox
     }
     
+    public static func == (lhs: ImageFile, rhs: ImageFile) -> Bool {
+        return lhs.name == rhs.name
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+    }
 }
 
 class DataSource: ObservableObject {
     @Published var selectedPhotos = [ImageFile]()
     @Published var selected = [String:Int]()
     var imageCachingManager = PHCachingImageManager()
-    //var fetchResult: PHFetchResult<PHAsset>
     
-   // let batchSize = 50
-    //var loadedPhotos = [ImageFile]()
     var selectedPhotosMemorySize: Double {
-            let imageFileSize = MemoryLayout<ImageFile>.size
-            let bytes = selectedPhotos.count * imageFileSize
-            return Double(bytes) / (1024 * 1024)
+        var bytes = 0
+        for img in selectedPhotos {
+            bytes += MemoryLayout<[CGRect]>.size(ofValue: img.bbox)
+            bytes += MemoryLayout<PHAsset>.size(ofValue: img.asset)
+
+        }
+        return Double(bytes*selectedPhotos.count) / (1024 * 1024)
     }
 
     func loadAll(completion: @escaping () -> Void) {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 1000
+        // 100 photos == 756 MB mem usage.
+        // figure out where mem is being used... I thought I'm freeing mem
+        // every time i set img to nil?
+        fetchOptions.fetchLimit = 200
         let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        let totalCount = fetchResult.count
+        let batchSize = 20
+        var currentIndex = 0
         
-        fetchResult.enumerateObjects { asset, index, _ in
-            self.getAssetURL(asset) { url in
-                   if let url = url {
-                       self.detectFace(url: url) { url, rect in
-                           guard let url = url else {return}
-                           self.assessQuality(url: url) { url in
-                               guard let url = url else {return}
-                               let imageFile = ImageFile(asset: asset, url: url,  name: asset.value(forKey: "filename") as? String ?? "" )
-                                   DispatchQueue.main.async {
-                                       if self.selected[imageFile.name] == nil {
-                                           self.selectedPhotos.append(imageFile)
-                                           self.selected[imageFile.name] = self.selectedPhotos.count - 1
-                                       }
-                               }
-                           }
-                       }
-                   } else {
-                       print("could not get asset URL")
-                   }
-               }
+        func processBatch() {
+            let endIndex = min(currentIndex + batchSize, totalCount)
+            let dispatchGroup = DispatchGroup()
+            while currentIndex < endIndex {
+                let asset = fetchResult.object(at: currentIndex)
+                currentIndex += 1
+                dispatchGroup.enter()
+                asset.getURL { url in
+                    if let url = url {
+                        self.detectFace(url: url) { url, rect in
+                            guard let url = url else {
+                                dispatchGroup.leave()
+                                return
+                            }
+                            let imageFile = ImageFile(asset: asset, url: url, name: asset.value(forKey: "filename") as? String ?? "", bbox: rect)
+                            DispatchQueue.main.async {
+                                if self.selected[imageFile.name] == nil {
+                                    self.selectedPhotos.append(imageFile)
+                                    self.selected[imageFile.name] = self.selectedPhotos.count - 1
+                                }
+                                dispatchGroup.leave()
+                            }
+                        }
+                    } else {
+                        print("could not get asset URL")
+                    }
+                }
+            }
+            dispatchGroup.wait()
+            if currentIndex < totalCount {
+                print("total count: \(totalCount)")
+                print("Batch group \(currentIndex)")
+                processBatch()
+            } else {
+                completion()
+            }
         }
-        completion()
+        
+        DispatchQueue.global().async {
+            processBatch()
+        }
     }
+    
    
     // also return bounding box
     private func detectFace(url: URL, completion: @escaping (URL?,[CGRect]) -> Void) {
-        let faceDetectionRequest = VNDetectFaceRectanglesRequest { request, error in
+        DispatchQueue.global(qos: .userInitiated).async {
+         let faceDetectionRequest = VNDetectFaceRectanglesRequest { request, error in
             guard let results = request.results as? [VNFaceObservation], !results.isEmpty else {
                 completion(nil, [])
                 return
@@ -99,8 +138,9 @@ class DataSource: ObservableObject {
             completion(url, boxes)
         }
         
-        faceDetectionRequest.revision = VNDetectFaceRectanglesRequestRevision3
-        sendRequest(in: url, with: faceDetectionRequest)
+            faceDetectionRequest.revision = VNDetectFaceRectanglesRequestRevision3
+            self.sendRequest(in: url, with: faceDetectionRequest)
+        }
     }
     
     private func assessQuality(url: URL, completion: @escaping (URL?) -> Void) {
@@ -128,27 +168,14 @@ class DataSource: ObservableObject {
         }
     }
     
-    func getAssetURL(_ asset: PHAsset, completion: @escaping (URL?) -> Void) {
-        let options = PHContentEditingInputRequestOptions()
-        options.canHandleAdjustmentData = { _ in true }
-        options.isNetworkAccessAllowed = true
-        
-        asset.requestContentEditingInput(with: options) { (contentEditingInput, info) in
-            guard let contentEditingInput = contentEditingInput else {
-                completion(nil)
-                return
-            }
-            completion(contentEditingInput.fullSizeImageURL)
-        }
-    }
-    
     public func fetchImage(
-        asset: PHAsset,
+        img: ImageFile,
         targetSize: CGSize = CGSize(width: 100, height: 100),
            contentMode: PHImageContentMode = .default
        ) async throws -> UIImage? {
+           //print("MEM SIZE TOTAL: \(selectedPhotosMemorySize)")
            let results = PHAsset.fetchAssets(
-            withLocalIdentifiers: [asset.localIdentifier],
+            withLocalIdentifiers: [img.asset.localIdentifier],
                options: nil
            )
            guard let asset = results.firstObject else {
@@ -156,7 +183,7 @@ class DataSource: ObservableObject {
                throw PHPhotosError(.invalidResource)
            }
            let options = PHImageRequestOptions()
-           options.deliveryMode = .fastFormat
+           options.deliveryMode = .highQualityFormat    
            options.resizeMode = .fast
            options.isNetworkAccessAllowed = true
            options.isSynchronous = false
@@ -173,11 +200,43 @@ class DataSource: ObservableObject {
                            continuation.resume(throwing: error)
                            return
                        }
-                       continuation.resume(returning: image)
-                   }
+                       
+                       if let image = image {
+                            continuation.resume(returning: image)
+                           guard let idx = self?.selected[img.name] else {print("big error"); return}
+                           self?.selectedPhotos[idx].rawImg = image
+   
+                       }
+                    }
                )
            }
        }
 }
 
+extension PHAsset {
 
+    func getURL(completionHandler : @escaping ((_ responseURL : URL?) -> Void)){
+        if self.mediaType == .image {
+            let options: PHContentEditingInputRequestOptions = PHContentEditingInputRequestOptions()
+            options.canHandleAdjustmentData = {(adjustmeta: PHAdjustmentData) -> Bool in
+                return true
+            }
+            self.requestContentEditingInput(with: options, completionHandler: {(contentEditingInput: PHContentEditingInput?, info: [AnyHashable : Any]) -> Void in
+                if let input = contentEditingInput {
+                    completionHandler(contentEditingInput!.fullSizeImageURL as URL?)
+                }
+            })
+        } else if self.mediaType == .video {
+            let options: PHVideoRequestOptions = PHVideoRequestOptions()
+            options.version = .original
+            PHImageManager.default().requestAVAsset(forVideo: self, options: options, resultHandler: {(asset: AVAsset?, audioMix: AVAudioMix?, info: [AnyHashable : Any]?) -> Void in
+                if let urlAsset = asset as? AVURLAsset {
+                    let localVideoUrl: URL = urlAsset.url as URL
+                    completionHandler(localVideoUrl)
+                } else {
+                    completionHandler(nil)
+                }
+            })
+        }
+    }
+}

@@ -15,11 +15,11 @@ struct ImageWithBoundingBoxesView: View {
     @ObservedObject var imgFile: ImageFile
     @Binding var showRect: Bool
     @State var image : UIImage? = nil
-    
     var body: some View {
         ZStack {
             if let image = image {
-                Image(uiImage: image)
+                VStack{
+                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(
@@ -27,11 +27,16 @@ struct ImageWithBoundingBoxesView: View {
                         height: 100
                     )
                     .clipped()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 0)
+                           .stroke(imgFile.isTapped ? .red : .clear, lineWidth: imgFile.isTapped ? 4 : 0)
+                    )   
+                    Text("\(imgFile.name) | \(imgFile.dist != nil ? imgFile.dist! : -1)").font(.custom("tiny", size: CGFloat(8)))
+                }
             } else {
-                Rectangle().foregroundColor(.gray).aspectRatio(1, contentMode: .fit)
+                Rectangle().foregroundColor(.clear).aspectRatio(1, contentMode: .fit)
                 ProgressView()
             }
-            
         }
         .task {
             await loadImageAsset()
@@ -40,14 +45,18 @@ struct ImageWithBoundingBoxesView: View {
         .onDisappear {
             image = nil
         }
-        
+        .onAppear {
+            if imgFile.isTapped {
+                print("img \(imgFile.name) is tapped")
+            }
+        }
     }
     
     func loadImageAsset(
         targetSize: CGSize = PHImageManagerMaximumSize
     ) async {
         guard let uiImage = try? await dataSource.fetchImage(
-            asset: imgFile.asset, targetSize: targetSize
+            img: imgFile, targetSize: targetSize
         ) else {
             image = nil
             return
@@ -55,7 +64,6 @@ struct ImageWithBoundingBoxesView: View {
         image = uiImage
     }
 }
-
 
 func adjustBoundingBox(_ boundingBox: CGRect, forImageSize imageSize: CGSize, orientation: UIImage.Orientation) -> CGRect {
     let scaleFactorX: CGFloat = 1.2
@@ -103,22 +111,3 @@ func adjustBoundingBox(_ boundingBox: CGRect, forImageSize imageSize: CGSize, or
     return clampedBox
 }
 
-/*
- ForEach(0..<photo.bbox.count, id: \.self) { index in
- let box = photo.bbox[index]
- let adjustedBox = adjustBoundingBox(box, forImageSize: photo.thumbnail.size, orientation: photo.thumbnail.imageOrientation)
- let normalizedBox = CGRect(
- x: adjustedBox.minX / photo.thumbnail.size.width,
- y: adjustedBox.minY / photo.thumbnail.size.height,
- width: adjustedBox.width / photo.thumbnail.size.width,
- height: adjustedBox.height / photo.thumbnail.size.height
- )
- if toggleNormalize {
- } else if showRect {
- Rectangle()
- .stroke(Color.green, lineWidth: 2)
- .frame(width: geometry.size.width * normalizedBox.width, height: geometry.size.height * normalizedBox.height)
- .position(x: geometry.size.width * normalizedBox.midX, y: geometry.size.height * normalizedBox.midY)
- }
- }
- */
