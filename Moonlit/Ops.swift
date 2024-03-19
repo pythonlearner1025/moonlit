@@ -8,7 +8,7 @@
 import Foundation
 import CoreML
 
-extension FaceDetectionGalleryView {
+extension GalleryView {
     func mat_mul(_ a: MLMultiArray, _ b: MLMultiArray) -> MLMultiArray {
         guard a.count == b.count else {
             fatalError("Matrices must have the same dimensions for element-wise multiplication")

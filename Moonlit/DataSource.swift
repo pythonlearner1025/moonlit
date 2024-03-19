@@ -27,6 +27,7 @@ public class ImageFile: ObservableObject, Hashable {
     @Published var selected: Bool = false
     @Published var dist : Double? = nil
     
+    
     init(asset: PHAsset, url: URL, name: String, bbox: [CGRect]) {
         self.asset = asset
         self.url = url
@@ -46,25 +47,12 @@ public class ImageFile: ObservableObject, Hashable {
 class DataSource: ObservableObject {
     @Published var selectedPhotos = [ImageFile]()
     @Published var selected = [String:Int]()
-    var imageCachingManager = PHCachingImageManager()
-    
-    var selectedPhotosMemorySize: Double {
-        var bytes = 0
-        for img in selectedPhotos {
-            bytes += MemoryLayout<[CGRect]>.size(ofValue: img.bbox)
-            bytes += MemoryLayout<PHAsset>.size(ofValue: img.asset)
-
-        }
-        return Double(bytes*selectedPhotos.count) / (1024 * 1024)
-    }
+    let cache = CachedImageManager()
 
     func loadAll(completion: @escaping () -> Void) {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        // 100 photos == 756 MB mem usage.
-        // figure out where mem is being used... I thought I'm freeing mem
-        // every time i set img to nil?
-        fetchOptions.fetchLimit = 200
+        fetchOptions.fetchLimit = 300
         let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
         let totalCount = fetchResult.count
         let batchSize = 20
@@ -113,7 +101,6 @@ class DataSource: ObservableObject {
         }
     }
     
-   
     // also return bounding box
     private func detectFace(url: URL, completion: @escaping (URL?,[CGRect]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
@@ -143,21 +130,6 @@ class DataSource: ObservableObject {
         }
     }
     
-    private func assessQuality(url: URL, completion: @escaping (URL?) -> Void) {
-        let faceQualityRequest = VNDetectFaceCaptureQualityRequest {request, error in
-            guard let results = request.results as? [VNFaceObservation], !results.isEmpty else {
-                completion(nil)
-                return
-            }
-            let faceQuals = results.compactMap{$0.faceCaptureQuality}
-            if let highest = faceQuals.max(), highest < 0.95 {
-                completion(nil)
-            }                
-            completion(url)
-        }
-        faceQualityRequest.revision = VNDetectFaceCaptureQualityRequestRevision3
-        sendRequest(in: url, with: faceQualityRequest)
-    }
     
     private func sendRequest(in url: URL, with request: VNImageBasedRequest) {
         let handler = VNImageRequestHandler(url: url, options: [:])
@@ -167,29 +139,30 @@ class DataSource: ObservableObject {
             print("request failed")
         }
     }
-    
+    /*
     public func fetchImage(
         img: ImageFile,
         targetSize: CGSize = CGSize(width: 100, height: 100),
-           contentMode: PHImageContentMode = .default
-       ) async throws -> UIImage? {
-           //print("MEM SIZE TOTAL: \(selectedPhotosMemorySize)")
-           let results = PHAsset.fetchAssets(
-            withLocalIdentifiers: [img.asset.localIdentifier],
-               options: nil
-           )
-           guard let asset = results.firstObject else {
-               print("asset not found")
-               throw PHPhotosError(.invalidResource)
-           }
-           let options = PHImageRequestOptions()
-           options.deliveryMode = .highQualityFormat    
-           options.resizeMode = .fast
-           options.isNetworkAccessAllowed = true
-           options.isSynchronous = false
-           return try await withCheckedThrowingContinuation { [weak self] continuation in
-               /// Use the imageCachingManager to fetch the image
-               self?.imageCachingManager.requestImage(
+        contentMode: PHImageContentMode = .default,
+        continuation: @escaping (UIImage?) -> ())  {
+           DispatchQueue.global().async {
+               print("MEM SIZE TOTAL: \(self.selectedPhotosMemorySize)")
+               let results = PHAsset.fetchAssets(
+                withLocalIdentifiers: [img.asset.localIdentifier],
+                   options: nil
+               )
+               guard let asset = results.firstObject else {
+                   print("asset not found")
+                   PHPhotosError(.invalidResource)
+                   continuation(nil)
+                   return
+               }
+               let options = PHImageRequestOptions()
+               options.deliveryMode = .opportunistic
+               options.resizeMode = .fast
+               options.isNetworkAccessAllowed = true
+               options.isSynchronous = false
+               self.imageCachingManager.requestImage(
                    for: asset,
                    targetSize: targetSize,
                    contentMode: contentMode,
@@ -197,20 +170,22 @@ class DataSource: ObservableObject {
                    resultHandler: { image, info in
                        /// image is of type UIImage
                        if let error = info?[PHImageErrorKey] as? Error {
-                           continuation.resume(throwing: error)
-                           return
+                           continuation(nil)
                        }
                        
                        if let image = image {
-                            continuation.resume(returning: image)
-                           guard let idx = self?.selected[img.name] else {print("big error"); return}
-                           self?.selectedPhotos[idx].rawImg = image
-   
+                           // Perform downsampling
+                            continuation(image)
+                           guard let idx = self.selected[img.name] else {print("big error"); return}
+                           self.selectedPhotos[idx].rawImg = image
+
                        }
                     }
                )
-           }
        }
+    }
+    
+    */
 }
 
 extension PHAsset {
@@ -226,17 +201,34 @@ extension PHAsset {
                     completionHandler(contentEditingInput!.fullSizeImageURL as URL?)
                 }
             })
-        } else if self.mediaType == .video {
-            let options: PHVideoRequestOptions = PHVideoRequestOptions()
-            options.version = .original
-            PHImageManager.default().requestAVAsset(forVideo: self, options: options, resultHandler: {(asset: AVAsset?, audioMix: AVAudioMix?, info: [AnyHashable : Any]?) -> Void in
-                if let urlAsset = asset as? AVURLAsset {
-                    let localVideoUrl: URL = urlAsset.url as URL
-                    completionHandler(localVideoUrl)
-                } else {
-                    completionHandler(nil)
-                }
-            })
         }
+    }
+}
+
+extension DataSource {
+    var selectedPhotosMemorySize: Double {
+        var bytes = 0
+        for img in selectedPhotos {
+            bytes += MemoryLayout<[CGRect]>.size(ofValue: img.bbox)
+            bytes += MemoryLayout<PHAsset>.size(ofValue: img.asset)
+
+        }
+        return Double(bytes*selectedPhotos.count) / (1024 * 1024)
+    }
+    
+    private func assessQuality(url: URL, completion: @escaping (URL?) -> Void) {
+        let faceQualityRequest = VNDetectFaceCaptureQualityRequest {request, error in
+            guard let results = request.results as? [VNFaceObservation], !results.isEmpty else {
+                completion(nil)
+                return
+            }
+            let faceQuals = results.compactMap{$0.faceCaptureQuality}
+            if let highest = faceQuals.max(), highest < 0.95 {
+                completion(nil)
+            }
+            completion(url)
+        }
+        faceQualityRequest.revision = VNDetectFaceCaptureQualityRequestRevision3
+        sendRequest(in: url, with: faceQualityRequest)
     }
 }

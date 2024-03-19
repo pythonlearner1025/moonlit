@@ -11,7 +11,7 @@ import SwiftUI
 struct MoonlitApp: App {
     var body: some Scene {
         WindowGroup {
-            FaceDetectionGalleryView()
+            GalleryView()
         }
     }
 }

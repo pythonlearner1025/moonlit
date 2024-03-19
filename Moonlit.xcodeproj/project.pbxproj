@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		772CA82B2BA938FF00CE3665 /* CachedImageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772CA82A2BA938FF00CE3665 /* CachedImageManager.swift */; };
+		772CA82D2BA93B2400CE3665 /* Filter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772CA82C2BA93B2400CE3665 /* Filter.swift */; };
 		774486542BA6B1DC00FE87BC /* FaceNet.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 774486532BA6B1DC00FE87BC /* FaceNet.mlpackage */; };
 		774486562BA6BDE800FE87BC /* Ops.swift in Sources */ = {isa = PBXBuildFile; fileRef = 774486552BA6BDE800FE87BC /* Ops.swift */; };
 		7744865B2BA6D4AA00FE87BC /* ImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7744865A2BA6D4AA00FE87BC /* ImageView.swift */; };
@@ -40,6 +42,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		772CA82A2BA938FF00CE3665 /* CachedImageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedImageManager.swift; sourceTree = "<group>"; };
+		772CA82C2BA93B2400CE3665 /* Filter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Filter.swift; sourceTree = "<group>"; };
 		774486532BA6B1DC00FE87BC /* FaceNet.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = FaceNet.mlpackage; sourceTree = "<group>"; };
 		774486552BA6BDE800FE87BC /* Ops.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ops.swift; sourceTree = "<group>"; };
 		7744865A2BA6D4AA00FE87BC /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageView.swift; sourceTree = "<group>"; };
@@ -125,6 +129,8 @@
 				77AEDBC82BA2A032008B809C /* Assets.xcassets */,
 				77AEDBCA2BA2A032008B809C /* Preview Content */,
 				774486552BA6BDE800FE87BC /* Ops.swift */,
+				772CA82A2BA938FF00CE3665 /* CachedImageManager.swift */,
+				772CA82C2BA93B2400CE3665 /* Filter.swift */,
 			);
 			path = Moonlit;
 			sourceTree = "<group>";
@@ -294,6 +300,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				7744865B2BA6D4AA00FE87BC /* ImageView.swift in Sources */,
+				772CA82D2BA93B2400CE3665 /* Filter.swift in Sources */,
+				772CA82B2BA938FF00CE3665 /* CachedImageManager.swift in Sources */,
 				77AEDBEF2BA2AAC0008B809C /* Photos.swift in Sources */,
 				77A892A72BA787AB00E8F7C6 /* GridView.swift in Sources */,
 				77AEDBC72BA2A031008B809C /* ContentView.swift in Sources */,

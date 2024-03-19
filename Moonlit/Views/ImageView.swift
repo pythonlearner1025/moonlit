@@ -10,58 +10,43 @@ import SwiftUI
 import Vision
 import Photos
 
-struct ImageWithBoundingBoxesView: View {
-    @EnvironmentObject var dataSource : DataSource
+struct ImageItemView: View {
     @ObservedObject var imgFile: ImageFile
-    @Binding var showRect: Bool
-    @State var image : UIImage? = nil
+    //@Binding var showRect: Bool
+    var cache : CachedImageManager?
+    var imageSize : CGSize
+    
+    @State private var image : Image? = nil
+    @State private var imageReqID : PHImageRequestID?
+    
     var body: some View {
-        ZStack {
+        VStack {
             if let image = image {
-                VStack{
-                 Image(uiImage: image)
+                image
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(
-                        width: 100,
-                        height: 100
-                    )
-                    .clipped()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 0)
-                           .stroke(imgFile.isTapped ? .red : .clear, lineWidth: imgFile.isTapped ? 4 : 0)
-                    )   
-                    Text("\(imgFile.name) | \(imgFile.dist != nil ? imgFile.dist! : -1)").font(.custom("tiny", size: CGFloat(8)))
-                }
+                    .scaledToFit()
+                    .overlay{
+                        if imgFile.isTapped {
+                            RoundedRectangle(cornerRadius: 10)
+                             .stroke(imgFile.isTapped ? .red : .clear, lineWidth: imgFile.isTapped ? 5 : 0)
+                        }
+                    }
+                
             } else {
-                Rectangle().foregroundColor(.clear).aspectRatio(1, contentMode: .fit)
                 ProgressView()
             }
+            Text("\(imgFile.name) | \(imgFile.dist != nil ? imgFile.dist! : -1)").font(.custom("tiny", size: CGFloat(8)))
         }
         .task {
-            await loadImageAsset()
-        }
-        // up from the memory
-        .onDisappear {
-            image = nil
-        }
-        .onAppear {
-            if imgFile.isTapped {
-                print("img \(imgFile.name) is tapped")
+            guard image == nil, let cache = cache else { return }
+            await cache.requestImage(for: imgFile.asset, targetSize: imageSize) { result in
+                Task {
+                    if let result = result {
+                        self.image = Image(uiImage: result.image)
+                    }
+                }
             }
         }
-    }
-    
-    func loadImageAsset(
-        targetSize: CGSize = PHImageManagerMaximumSize
-    ) async {
-        guard let uiImage = try? await dataSource.fetchImage(
-            img: imgFile, targetSize: targetSize
-        ) else {
-            image = nil
-            return
-        }
-        image = uiImage
     }
 }
 
