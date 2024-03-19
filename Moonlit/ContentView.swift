@@ -32,7 +32,7 @@ struct GalleryView: View {
                 ProgressView("Detecting faces...")
                     .onAppear {
                         print("requesting access...")
-                        requestPhotoLibraryAccess()
+                    //    requestPhotoLibraryAccess()
                     }
             } else {
                 if filtering {
@@ -58,13 +58,24 @@ struct GalleryView: View {
                         .navigationBarTitleDisplayMode(.inline)
                     HStack{
                         Button("Generate") {
-                        print("pressed")
+                            //tainRequest()
                         }
                     }
                     }
                 }
             }
         }
+        .task {
+            await data.loadPhotos({
+            })
+           
+        }
+        .onChange(of: data.isPhotosLoaded, {
+             data.loadAll(completion: {
+               loaded = true
+            })
+        })
+    
     }
     
     private func imageItemView(image: ImageFile) -> some View {
@@ -101,9 +112,9 @@ struct GalleryView: View {
                 filtered = true
             }
             Spacer()
-            Button("Bbox") {
-                showRect.toggle()
-                print(showRect)
+            Button("Remove") {
+                //showRect.toggle()
+                unSelect()
             }
             Spacer()
             Button("Clear") {
@@ -114,7 +125,7 @@ struct GalleryView: View {
         }
         .padding()
     }
-        
+        /*
     private func requestPhotoLibraryAccess() {
         PHPhotoLibrary.requestAuthorization { status in
             if status == .authorized {
@@ -125,4 +136,5 @@ struct GalleryView: View {
             }
         }
     }
+         */
 }
