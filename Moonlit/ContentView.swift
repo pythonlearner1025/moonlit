@@ -68,13 +68,11 @@ struct GalleryView: View {
         .task {
             await data.loadPhotos({
             })
-           
         }
         .onChange(of: data.isPhotosLoaded, {
-             data.loadAll(completion: {
-               loaded = true
-            })
+             data.loadAll(completion: {})
         })
+ 
     
     }
     
@@ -125,16 +123,5 @@ struct GalleryView: View {
         }
         .padding()
     }
-        /*
-    private func requestPhotoLibraryAccess() {
-        PHPhotoLibrary.requestAuthorization { status in
-            if status == .authorized {
-                data.loadAll(completion: {
-                   loaded = true
-                })
-            } else {
-            }
-        }
-    }
-         */
+    
 }

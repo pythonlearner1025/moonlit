@@ -213,6 +213,7 @@ class PhotoCollection: NSObject, ObservableObject {
     
     private static func getSmartAlbum(subtype: PHAssetCollectionSubtype) -> PHAssetCollection? {
         let fetchOptions = PHFetchOptions()
+        //fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
         let collections = PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: subtype, options: fetchOptions)
         return collections.firstObject
     }
