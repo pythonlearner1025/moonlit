@@ -17,8 +17,6 @@ class PhotoProcessor {
     }
     
     func fetchPeople(completion: @escaping ([String]) -> Void) {
-        // Fetch people using PHAsset.fetchAssets(with:options:)
-        // Store local identifiers and call completion with the array of identifiers
         let options = PHFetchOptions()
         options.fetchLimit = 1
         let peopleResult = PHAsset.fetchAssets(with: .image, options: options)
@@ -26,11 +24,6 @@ class PhotoProcessor {
        
         var localIds : [String] = []
         images.enumerateObjects { img, _, _ in
-            /*
-            if let id = img.localIdentifier {
-                localIds.append(id)
-            }
-             */
         }
         completion(localIds)
     }

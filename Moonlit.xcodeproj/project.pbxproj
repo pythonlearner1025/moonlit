@@ -27,6 +27,9 @@
 		77AEDBE22BA2A033008B809C /* MoonlitUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBE12BA2A033008B809C /* MoonlitUITestsLaunchTests.swift */; };
 		77AEDBEF2BA2AAC0008B809C /* Photos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBEE2BA2AAC0008B809C /* Photos.swift */; };
 		77AEDBF72BA2D4A6008B809C /* DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBF62BA2D4A6008B809C /* DataSource.swift */; };
+		77CD5EE82BAABAF0004C459A /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77CD5EE72BAABAF0004C459A /* Utils.swift */; };
+		77F0AE1C2BAAC66D00F4BA4F /* facenet_critic.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 77F0AE1B2BAAC66C00F4BA4F /* facenet_critic.mlpackage */; };
+		77F0AE1E2BAAC92F00F4BA4F /* facenet_avg.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 77F0AE1D2BAAC92E00F4BA4F /* facenet_avg.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +74,9 @@
 		77AEDBEE2BA2AAC0008B809C /* Photos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Photos.swift; sourceTree = "<group>"; };
 		77AEDBF02BA2ABDE008B809C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		77AEDBF62BA2D4A6008B809C /* DataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSource.swift; sourceTree = "<group>"; };
+		77CD5EE72BAABAF0004C459A /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		77F0AE1B2BAAC66C00F4BA4F /* facenet_critic.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = facenet_critic.mlpackage; sourceTree = "<group>"; };
+		77F0AE1D2BAAC92E00F4BA4F /* facenet_avg.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = facenet_avg.mlpackage; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +107,8 @@
 		774486572BA6D26A00FE87BC /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				77F0AE1D2BAAC92E00F4BA4F /* facenet_avg.mlpackage */,
+				77F0AE1B2BAAC66C00F4BA4F /* facenet_critic.mlpackage */,
 				774486532BA6B1DC00FE87BC /* FaceNet.mlpackage */,
 			);
 			path = Models;
@@ -145,6 +153,7 @@
 				772CA8362BA9509000CE3665 /* PhotoLibrary.swift */,
 				772CA8302BA94DC900CE3665 /* PhotoCollection.swift */,
 				772CA8322BA94E3600CE3665 /* PhotoAssetCollection.swift */,
+				77CD5EE72BAABAF0004C459A /* Utils.swift */,
 				772CA8342BA94E8000CE3665 /* PhotoAsset.swift */,
 			);
 			path = Moonlit;
@@ -321,7 +330,9 @@
 				77AEDBEF2BA2AAC0008B809C /* Photos.swift in Sources */,
 				772CA82F2BA9494200CE3665 /* Request.swift in Sources */,
 				77A892A72BA787AB00E8F7C6 /* GridView.swift in Sources */,
+				77CD5EE82BAABAF0004C459A /* Utils.swift in Sources */,
 				772CA8372BA9509000CE3665 /* PhotoLibrary.swift in Sources */,
+				77F0AE1E2BAAC92F00F4BA4F /* facenet_avg.mlpackage in Sources */,
 				772CA8352BA94E8000CE3665 /* PhotoAsset.swift in Sources */,
 				77AEDBC72BA2A031008B809C /* ContentView.swift in Sources */,
 				774486562BA6BDE800FE87BC /* Ops.swift in Sources */,
@@ -329,6 +340,7 @@
 				77AEDBC52BA2A031008B809C /* MoonlitApp.swift in Sources */,
 				772CA8312BA94DC900CE3665 /* PhotoCollection.swift in Sources */,
 				774486542BA6B1DC00FE87BC /* FaceNet.mlpackage in Sources */,
+				77F0AE1C2BAAC66D00F4BA4F /* facenet_critic.mlpackage in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -50,66 +50,81 @@ class DataSource: ObservableObject {
     let photoCollection = PhotoCollection(smartAlbum: .smartAlbumUserLibrary)
     @Published var isPhotosLoaded = false
     
-    func loadAll(completion: @escaping() -> Void) {
-        
-        var total = photoCollection.photoAssets.phAssets.count
-        //let BS = 30
-        let serialQueue = DispatchQueue(label: "serialQueue")
-        var i = 0
-      //  let group = DispatchGroup()
-        while i < total {
-            if i > 0  {
-       //         group.wait()
+    // concurrency docs https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/#Defining-and-Calling-Asynchronous-Functions
+    func loadAll(completion: @escaping () -> Void) {
+        Task {
+            var total = self.photoCollection.photoAssets.phAssets.count
+            let BS = 50
+            var i = 0
+
+            while i < total {
+                let assets = Array(self.photoCollection.photoAssets[i..<min(i + BS, total)].compactMap { $0.phAsset })
+                let imageFiles = await assets.parallelMap { asset -> ImageFile? in
+                    guard asset.mediaType == .image else {
+                        return ImageFile(asset: asset, url: nil, name: "", bbox: [])
+                    }
+
+                    print("\(i) : \(asset.value(forKey: "filename") as? String ?? "")")
+
+                    let options = PHImageRequestOptions()
+                    options.isNetworkAccessAllowed = true
+                    options.deliveryMode = .fastFormat
+                    options.isSynchronous = true
+
+                    let imageData = await self.getImageData(for: asset, options: options)
+                    if let imageData = imageData {
+                         let (asset, image, cgImage) = imageData
+                        let rects = await self.getFace(cgImage: cgImage)
+                        let imageFile = ImageFile(asset: asset, url: nil, name: asset.value(forKey: "filename") as? String ?? "", bbox: rects ?? [])
+                        return imageFile
+                    }
+                    return nil
+                }
+
+                for imageFile in imageFiles {
+                    guard let imageFile = imageFile else {continue}
+                    if !imageFile.bbox.isEmpty {
+                        print("Got rects for \(imageFile.name)")
+                        if selected[imageFile.name] == nil {
+                            print("Adding \(imageFile.name)")
+                            await MainActor.run {
+                                selectedPhotos.append(imageFile)
+                                selected[imageFile.name] = selectedPhotos.count - 1
+                            }
+                        }
+                    } else {
+                        print("No face for \(imageFile.name)")
+                    }
+                }
+
+                i += BS
             }
-        //    group.enter()
-            i+=1
-            guard let asset = photoCollection.photoAssets[i].phAsset else {
-                i+=1
-         //       group.leave()
-                continue
-            }
-            if asset.mediaType != .image {
-               i+=1
-          //     group.leave()
-               continue
-            }
-            print("\(i) : \(asset.value(forKey: "filename") as? String ?? "")")
-            let options = PHImageRequestOptions()
-            options.isNetworkAccessAllowed = true
-            options.deliveryMode = .opportunistic
-            autoreleasepool{
-             PHImageManager.default().requestImage(for: asset, targetSize: PHImageManagerMaximumSize, contentMode: .aspectFit, options: options) { (image, info) in
-                  if let image = image, let cgImage = image.cgImage {
-                      serialQueue.async{
-                          self.face(cgImage: cgImage) { rects in
-                              if let rects = rects {
-                                  print("got rects")
-                                  let imageFile = ImageFile(asset: asset, url: nil, name: asset.value(forKey: "filename") as? String ?? "", bbox: rects)
-                                      DispatchQueue.main.async {
-                                          if self.selected[imageFile.name] == nil {
-                                              print("adding")
-                                              self.selectedPhotos.append(imageFile)
-                                              self.selected[imageFile.name] = self.selectedPhotos.count - 1
-                                          }
-                                      }
-                   //                   group.leave()
-                              } else {
-                                  print("no face")
-                       //           group.leave()
-                              }
-                             
-                          }
-                      }
-                  } else {
-                    print("invalid image or cgImage")
-               //       group.leave()
-                  }
-              }   
+
+            completion()
+        }
+    }
+
+    private func getImageData(for asset: PHAsset, options: PHImageRequestOptions) async -> (PHAsset, UIImage, CGImage)? {
+        return await withCheckedContinuation { continuation in
+            let size = CGSize(width: asset.pixelWidth, height: asset.pixelHeight)
+            PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: options) { (image, info) in
+                if let image = image, let cgImage = image.cgImage {
+                    continuation.resume(returning: (asset, image, cgImage))
+                } else {
+                    continuation.resume(returning: nil)
+                }
             }
         }
-    //    group.wait()
     }
-    
+
+    private func getFace(cgImage: CGImage) async -> ([CGRect]?) {
+        return await withCheckedContinuation { continuation in
+            face(cgImage: cgImage) { rects in
+                continuation.resume(returning: rects)
+            }
+        }
+    }
+
     private func face(cgImage: CGImage, completion: @escaping ([CGRect]?) -> Void) {
         let request = VNDetectFaceRectanglesRequest { request, error in
             guard let results = request.results as? [VNFaceObservation], !results.isEmpty else {
@@ -138,60 +153,6 @@ class DataSource: ObservableObject {
             completion(nil)
         }
     }
-    /*
-    func loadAll(completion: @escaping () -> Void) {
-           let fetchOptions = PHFetchOptions()
-           fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-           fetchOptions.fetchLimit = 1000
-            let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
-               let totalCount = fetchResult.count
-            print(totalCount)
-           let batchSize = 20
-           var currentIndex = 0
-           func processBatch() {
-               let endIndex = min(currentIndex + batchSize, totalCount)
-               let dispatchGroup = DispatchGroup()
-               while currentIndex < endIndex {
-                   let asset = fetchResult.object(at: currentIndex)
-                   currentIndex += 1
-                   print("\(currentIndex)")
-                   dispatchGroup.enter()
-                   asset.getURL { url in
-                       if let url = url {
-                           self.detectFace(url: url) { url, rect in
-                               if let url = url {
-                                let rects = [CGRect(x:CGFloat(0), y:CGFloat(0), width: CGFloat(0), height: CGFloat(0) )]
-                               let imageFile = ImageFile(asset: asset, url: url, name: asset.value(forKey: "filename") as? String ?? "", bbox: rects)
-                                   DispatchQueue.main.async {
-                                       if self.selected[imageFile.name] == nil {
-                                           self.selectedPhotos.append(imageFile)
-                                           self.selected[imageFile.name] = self.selectedPhotos.count - 1
-                                       }
-                                   }
-                               }
-                               dispatchGroup.leave()
-                                }
-                            } else {
-                           print("could not get asset URL")
-                       }
-                   }
-               }
-               dispatchGroup.wait()
-               if currentIndex < totalCount {
-                   print("total count: \(totalCount)")
-                   print("Batch group \(currentIndex)")
-                   processBatch()
-               } else {
-                   completion()
-               }
-           }
-           
-           
-           DispatchQueue.global().async {
-               processBatch()
-           }
-       }
-    */
     
     private func detectFace(url: URL, completion: @escaping (URL?, [CGRect]) -> Void) {
         DispatchQueue.global().async{
