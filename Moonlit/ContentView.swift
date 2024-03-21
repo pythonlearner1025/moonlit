@@ -1,127 +1,117 @@
-import SwiftUI
-import Vision
-import Photos
-import CoreML
+//
+//  ContentView.swift
+//  Moonlit
+//
+//  Created by minjune Song on 3/20/24.
+//
 
-struct GalleryView: View {
-    @ObservedObject public var data = DataSource()
-    @State var loaded = false
-    @State var showRect = false
-    @State var filtered = false
-    @State var filtering = false
-    let cutoff = 15
-    var done = false
-    
+import Foundation
+//
+//  ContentView.swift
+//  SlidingIntroScreen
+//
+//  Created by Federico on 18/03/2022.
+//
+
+import SwiftUI
+import Photos
+
+enum PickMode {
+    case auto
+    case manual
+    case none
+}
+
+struct ContentView: View {
+    @State private var pageIndex = 0
+    @State private var pickMode: PickMode = .auto
+    @State private var displayPicker : Bool = true
     @Environment(\.displayScale) private var displayScale
-   
-    private static let itemSpacing = 12.0
-    private static let itemCornerRadius = 15.0
-    private static let itemSize = CGSize(width: 90, height: 90)
-    
-    private var imageSize: CGSize {
-        return CGSize(width: Self.itemSize.width * min(displayScale, 2), height: Self.itemSize.height * min(displayScale, 2))
+    private let pages: [Page] = Page.samplePages
+    private let dotAppearance = UIPageControl.appearance()
+
+    var body: some View {
+        NavigationView {
+            TabView(selection: $pageIndex) {
+                ForEach(pages) { page in
+                    VStack {
+                        Spacer()
+                        PageView(page: page)
+                        Spacer()
+                        if page == pages.last {
+                            NavigationLink(destination: GalleryView(pickMode: pickMode, displayPicker: $displayPicker)) {
+                                Text("Select Photos")
+                            }.simultaneousGesture(TapGesture().onEnded {
+                                if pickMode == .manual {
+                                    print("firing")
+                                    displayPicker = true
+                                } else {
+                                    displayPicker = false
+                                }
+                            })
+                            .buttonStyle(.bordered)
+                            .onAppear{
+                                requestAccess()
+                            }
+                        } else {
+                            Button("next", action: incrementPage)
+                                .buttonStyle(.borderedProminent)
+                        }
+                        Spacer()
+                    }
+                    .tag(page.tag)
+                }
+            }
+            .animation(.easeInOut, value: pageIndex)
+            .indexViewStyle(.page(backgroundDisplayMode: .interactive))
+            .tabViewStyle(PageTabViewStyle())
+            .onAppear {
+                dotAppearance.currentPageIndicatorTintColor = .black
+                dotAppearance.pageIndicatorTintColor = .gray
+            }
+        }
     }
     
-    private let columns = [
-        GridItem(.adaptive(minimum: itemSize.width, maximum: itemSize.height), spacing: itemSpacing)
-    ]
+    func requestAccess() {
+        // Request read-write access to the user's photo library
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
+            switch status {
+            case .notDetermined:
+                // The user hasn't determined this app's access.
+                pickMode = .none
+            case .restricted:
+                // The system restricted this app's access.
+                pickMode = .none
+            case .denied:
+                // The user explicitly denied this app's access.
+                pickMode = .none
+            case .authorized:
+                // The user authorized this app to access Photos data.
+                pickMode = .auto
+            case .limited:
+                // The user authorized this app for limited Photos access.
+                pickMode = .manual
+            @unknown default:
+                fatalError()
+            }
+        }
+    }
+    func incrementPage() {
+        pageIndex += 1
+    }
+    
+    func goToZero() {
+        pageIndex = 0
+    }
+}
+
+struct PickerView: View {
+    let pickMode: PickMode
     
     var body: some View {
-        VStack {
-            if data.selectedPhotos.isEmpty {
-                ProgressView("Detecting faces...")
-                    .onAppear {
-                        print("requesting access...")
-                    //    requestPhotoLibraryAccess()
-                    }
-            } else {
-                if filtering {
-                    ProgressView("Filtering...")
-                        .progressViewStyle(.automatic)
-                        .padding()
-                } else {
-                    VStack {
-                        buttonsView()
-                        ScrollView {
-                            LazyVGrid(columns: columns, spacing: Self.itemSpacing) {
-                                ForEach(data.selectedPhotos, id: \.self) { imgFile in
-                                    if !filtered || imgFile.selected {
-                                        imageItemView(image: imgFile)
-                                        // add onTapped
-                                    }
-                                }
-                            }
-                            .padding([.vertical], Self.itemSpacing)
-
-                        }
-                        .navigationTitle("Gallery")
-                        .navigationBarTitleDisplayMode(.inline)
-                    HStack{
-                        Button("Generate") {
-                            //tainRequest()
-                        }
-                    }
-                    }
-                }
-            }
-        }
-        .task {
-            await data.loadPhotos({
-            })
-        }
-        .onChange(of: data.isPhotosLoaded, {
-             data.loadAll(completion: {})
-        })
- 
-    
+        // Your PickerView implementation goes here
+        Text("PickerView")
+            .font(.title)
+        Text("Pick Mode: \(pickMode == .auto ? "Auto" : "Manual")")
     }
-    
-    private func imageItemView(image: ImageFile) -> some View {
-        ImageItemView(imgFile: image, cache: data.cache, imageSize: imageSize)
-            .frame(width: Self.itemSize.width, height: Self.itemSize.height)
-            .cornerRadius(10)
-            .clipped()
-            .overlay(alignment: .bottomLeading) {
-              
-            }
-            .onAppear {
-                Task {
-                    await data.cache.startCaching(for: [image.asset], targetSize: imageSize)
-                }
-            }
-            .onDisappear {
-                Task {
-                    await data.cache.stopCaching(for: [image.asset], targetSize: imageSize)
-                }
-            }
-            .onTapGesture {
-                image.isTapped.toggle()
-            }
-    }
-    
-    private func buttonsView() -> some View {
-        HStack {
-            Spacer()
-            Button("Filter") {
-                filtering = true
-                filterByPerson2({
-                     filtering = false
-                })
-                filtered = true
-            }
-            Spacer()
-            Button("Remove") {
-                //showRect.toggle()
-                unSelect()
-            }
-            Spacer()
-            Button("Clear") {
-                clearFilter()
-                filtered = false
-            }
-            Spacer()
-        }
-        .padding()
-    }
-    
 }

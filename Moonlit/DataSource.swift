@@ -53,18 +53,23 @@ class DataSource: ObservableObject {
     // concurrency docs https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/#Defining-and-Calling-Asynchronous-Functions
     func loadAll(completion: @escaping () -> Void) {
         Task {
+            // around 5ms each
             var total = self.photoCollection.photoAssets.phAssets.count
-            let BS = 50
+            let limit = 1000
+            let BS = 10
             var i = 0
-
+            let startTime = Date()
             while i < total {
+                if selectedPhotos.count > limit {
+                    break
+                }
                 let assets = Array(self.photoCollection.photoAssets[i..<min(i + BS, total)].compactMap { $0.phAsset })
                 let imageFiles = await assets.parallelMap { asset -> ImageFile? in
                     guard asset.mediaType == .image else {
                         return ImageFile(asset: asset, url: nil, name: "", bbox: [])
                     }
 
-                    print("\(i) : \(asset.value(forKey: "filename") as? String ?? "")")
+                   // print("\(i) : \(asset.value(forKey: "filename") as? String ?? "")")
 
                     let options = PHImageRequestOptions()
                     options.isNetworkAccessAllowed = true
@@ -84,22 +89,24 @@ class DataSource: ObservableObject {
                 for imageFile in imageFiles {
                     guard let imageFile = imageFile else {continue}
                     if !imageFile.bbox.isEmpty {
-                        print("Got rects for \(imageFile.name)")
+                    //    print("Got rects for \(imageFile.name)")
                         if selected[imageFile.name] == nil {
-                            print("Adding \(imageFile.name)")
+                  //          print("Adding \(imageFile.name)")
                             await MainActor.run {
                                 selectedPhotos.append(imageFile)
                                 selected[imageFile.name] = selectedPhotos.count - 1
                             }
                         }
                     } else {
-                        print("No face for \(imageFile.name)")
+                    //    print("No face for \(imageFile.name)")
                     }
                 }
 
                 i += BS
             }
-
+            let endTime = Date()
+            let duration = endTime.timeIntervalSince(startTime)
+            print("loaded \(selectedPhotos.count) images in \(duration) seconds")
             completion()
         }
     }
@@ -219,7 +226,6 @@ class DataSource: ObservableObject {
 }
 
 extension PHAsset {
-
     func getURL(completionHandler : @escaping ((_ responseURL : URL?) -> Void)){
             if self.mediaType == .image {
                 let options: PHContentEditingInputRequestOptions = PHContentEditingInputRequestOptions()

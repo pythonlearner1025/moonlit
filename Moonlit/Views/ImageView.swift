@@ -18,17 +18,20 @@ struct ImageItemView: View {
     
     @State private var image : Image? = nil
     @State private var imageReqID : PHImageRequestID?
+    private static let itemSize = CGSize(width: 90, height: 90)
     
     var body: some View {
         VStack {
             if let image = image {
                 image
                     .resizable()
-                    .scaledToFit()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: Self.itemSize.width, height: Self.itemSize.height)
+                    .cornerRadius(10)
                     .overlay{
                         if imgFile.isTapped {
                             RoundedRectangle(cornerRadius: 10)
-                             .stroke(imgFile.isTapped ? .red : .clear, lineWidth: imgFile.isTapped ? 5 : 0)
+                                .stroke(imgFile.isTapped ? .blue : .clear, lineWidth: imgFile.isTapped ? 4 : 0)
                         }
                     }
                 
@@ -39,20 +42,35 @@ struct ImageItemView: View {
         }
         .task {
             guard image == nil, let cache = cache else { return }
-            await cache.requestImage(for: imgFile.asset, targetSize: imageSize) { result in
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .opportunistic
+            options.isNetworkAccessAllowed = true
+            await cache.requestImage(for: imgFile.asset, targetSize: imageSize, options: options) { result in
                 Task {
                     if let result = result {
-                        self.image = Image(uiImage: result.image)
+                        let sX = CGFloat(3)
+                        let sY = CGFloat(3)
+                        // TODO should be processing faces in all bboxes, not just 1st.
+                        let box = adjustBoundingBox(imgFile.bbox[0], forImageSize: result.image.size, orientation: result.image.imageOrientation, scaleFactorX: sX, scaleFactorY: sY)
+                        let face = extractFacePixels(result.image.cgImage!, box)
+                        let img = UIImage(cgImage: face!)
+                        self.image = Image(uiImage: img)
+                        //eself.image = Image(uiImage: result.image)
                     }
                 }
             }
         }
     }
+    
+    private func extractFacePixels(_ image: CGImage, _ boundingBox: CGRect) -> CGImage? {
+        guard let cgImage = image.cropping(to: boundingBox) else {
+            return nil
+        }
+        return cgImage
+    }
 }
 
-func adjustBoundingBox(_ boundingBox: CGRect, forImageSize imageSize: CGSize, orientation: UIImage.Orientation) -> CGRect {
-    let scaleFactorX: CGFloat = 1.2
-    let scaleFactorY: CGFloat = 1.9
+func adjustBoundingBox(_ boundingBox: CGRect, forImageSize imageSize: CGSize, orientation: UIImage.Orientation, scaleFactorX : CGFloat = 1.2, scaleFactorY : CGFloat = 1.9) -> CGRect {
     var adjustedBox: CGRect
     switch orientation {
     case .up, .upMirrored:
