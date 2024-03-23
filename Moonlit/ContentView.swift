@@ -6,15 +6,9 @@
 //
 
 import Foundation
-//
-//  ContentView.swift
-//  SlidingIntroScreen
-//
-//  Created by Federico on 18/03/2022.
-//
-
 import SwiftUI
 import Photos
+import Auth
 
 enum PickMode {
     case auto
@@ -23,6 +17,7 @@ enum PickMode {
 }
 
 struct ContentView: View {
+    let id : UUID
     @State private var pageIndex = 0
     @State private var pickMode: PickMode = .auto
     @State private var displayPicker : Bool = true
@@ -39,7 +34,8 @@ struct ContentView: View {
                         PageView(page: page)
                         Spacer()
                         if page == pages.last {
-                            NavigationLink(destination: GalleryView(pickMode: pickMode, displayPicker: $displayPicker)) {
+                            NavigationLink(destination: GalleryView(pickMode: pickMode, displayPicker: $displayPicker, id : id)
+                            ) {
                                 Text("Select Photos")
                             }.simultaneousGesture(TapGesture().onEnded {
                                 if pickMode == .manual {

@@ -55,7 +55,7 @@ class DataSource: ObservableObject {
         Task {
             // around 5ms each
             var total = self.photoCollection.photoAssets.phAssets.count
-            let limit = 1000
+            let limit = 100
             let BS = 10
             var i = 0
             let startTime = Date()

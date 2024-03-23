@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7713B2C82BAE98D500431041 /* PaymentCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7713B2C72BAE98D500431041 /* PaymentCheck.swift */; };
+		7713B2CD2BAEA2CC00431041 /* LocalData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7713B2CC2BAEA2CC00431041 /* LocalData.swift */; };
 		772CA82B2BA938FF00CE3665 /* CachedImageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772CA82A2BA938FF00CE3665 /* CachedImageManager.swift */; };
 		772CA82D2BA93B2400CE3665 /* Filter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772CA82C2BA93B2400CE3665 /* Filter.swift */; };
 		772CA82F2BA9494200CE3665 /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772CA82E2BA9494200CE3665 /* Request.swift */; };
@@ -37,6 +39,26 @@
 		77733B5A2BAB9550002E5061 /* facenet_critic.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 77733B592BAB9550002E5061 /* facenet_critic.mlpackage */; };
 		77733B5D2BABBA80002E5061 /* PageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77733B5C2BABBA80002E5061 /* PageModel.swift */; };
 		77733B5F2BABBB33002E5061 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77733B5E2BABBB33002E5061 /* ContentView.swift */; };
+		779A41AD2BAD0F1100E7DD2E /* RequestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41AC2BAD0F1100E7DD2E /* RequestManager.swift */; };
+		779A41B02BAD11EC00E7DD2E /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41AF2BAD11EC00E7DD2E /* Auth */; };
+		779A41B22BAD11EC00E7DD2E /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41B12BAD11EC00E7DD2E /* Functions */; };
+		779A41B42BAD11EC00E7DD2E /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41B32BAD11EC00E7DD2E /* PostgREST */; };
+		779A41B62BAD11EC00E7DD2E /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41B52BAD11EC00E7DD2E /* Realtime */; };
+		779A41B82BAD11EC00E7DD2E /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41B72BAD11EC00E7DD2E /* Storage */; };
+		779A41BA2BAD11EC00E7DD2E /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41B92BAD11EC00E7DD2E /* Supabase */; };
+		779A41C12BAD139800E7DD2E /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41C02BAD139800E7DD2E /* RootView.swift */; };
+		779A41CA2BAD13DA00E7DD2E /* AuthController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41C22BAD13DA00E7DD2E /* AuthController.swift */; };
+		779A41CB2BAD13DA00E7DD2E /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41C32BAD13DA00E7DD2E /* AuthView.swift */; };
+		779A41CC2BAD13DA00E7DD2E /* AuthWithEmailAndPassword.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41C42BAD13DA00E7DD2E /* AuthWithEmailAndPassword.swift */; };
+		779A41CD2BAD13DA00E7DD2E /* AuthWithMagicLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41C52BAD13DA00E7DD2E /* AuthWithMagicLink.swift */; };
+		779A41D02BAD13DA00E7DD2E /* SignInWithApple.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41C82BAD13DA00E7DD2E /* SignInWithApple.swift */; };
+		779A41D22BAD16A000E7DD2E /* ActionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41D12BAD16A000E7DD2E /* ActionState.swift */; };
+		779A41D52BAD174700E7DD2E /* CasePaths in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41D42BAD174700E7DD2E /* CasePaths */; };
+		779A41D72BAD17E100E7DD2E /* _Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41D62BAD17E100E7DD2E /* _Secrets.swift */; };
+		779A41D92BAD188500E7DD2E /* Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41D82BAD188500E7DD2E /* Extras.swift */; };
+		779A41DD2BAD1C5000E7DD2E /* PhoneNumberKit in Frameworks */ = {isa = PBXBuildFile; productRef = 779A41DC2BAD1C5000E7DD2E /* PhoneNumberKit */; };
+		779A41DF2BAD256C00E7DD2E /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41DE2BAD256C00E7DD2E /* Database.swift */; };
+		779A41E12BAD3AEA00E7DD2E /* GenSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779A41E02BAD3AEA00E7DD2E /* GenSource.swift */; };
 		77A892A72BA787AB00E8F7C6 /* GridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77A892A62BA787AB00E8F7C6 /* GridView.swift */; };
 		77AEDBC52BA2A031008B809C /* MoonlitApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBC42BA2A031008B809C /* MoonlitApp.swift */; };
 		77AEDBC72BA2A031008B809C /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBC62BA2A031008B809C /* GalleryView.swift */; };
@@ -46,6 +68,7 @@
 		77AEDBE02BA2A033008B809C /* MoonlitUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBDF2BA2A033008B809C /* MoonlitUITests.swift */; };
 		77AEDBE22BA2A033008B809C /* MoonlitUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBE12BA2A033008B809C /* MoonlitUITestsLaunchTests.swift */; };
 		77AEDBF72BA2D4A6008B809C /* DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77AEDBF62BA2D4A6008B809C /* DataSource.swift */; };
+		77B7E0132BAEA86700DE9AD4 /* LocalImage.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 77B7E0112BAEA86700DE9AD4 /* LocalImage.xcdatamodeld */; };
 		77C2CBBD2BABBCFA000889A0 /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77C2CBBC2BABBCFA000889A0 /* PageView.swift */; };
 		77C2CBBF2BABC06F000889A0 /* AutoPickerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77C2CBBE2BABC06F000889A0 /* AutoPickerModel.swift */; };
 		77C2CBC12BABC772000889A0 /* PhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77C2CBC02BABC772000889A0 /* PhotoPicker.swift */; };
@@ -71,6 +94,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7713B2C72BAE98D500431041 /* PaymentCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentCheck.swift; sourceTree = "<group>"; };
+		7713B2CC2BAEA2CC00431041 /* LocalData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalData.swift; sourceTree = "<group>"; };
 		772CA82A2BA938FF00CE3665 /* CachedImageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedImageManager.swift; sourceTree = "<group>"; };
 		772CA82C2BA93B2400CE3665 /* Filter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Filter.swift; sourceTree = "<group>"; };
 		772CA82E2BA9494200CE3665 /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
@@ -101,6 +126,19 @@
 		77733B592BAB9550002E5061 /* facenet_critic.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = facenet_critic.mlpackage; path = ../../../MobileFaceNet_Tutorial_Pytorch/facenet_critic.mlpackage; sourceTree = "<group>"; };
 		77733B5C2BABBA80002E5061 /* PageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModel.swift; sourceTree = "<group>"; };
 		77733B5E2BABBB33002E5061 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		779A41AC2BAD0F1100E7DD2E /* RequestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestManager.swift; sourceTree = "<group>"; };
+		779A41C02BAD139800E7DD2E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		779A41C22BAD13DA00E7DD2E /* AuthController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthController.swift; sourceTree = "<group>"; };
+		779A41C32BAD13DA00E7DD2E /* AuthView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		779A41C42BAD13DA00E7DD2E /* AuthWithEmailAndPassword.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthWithEmailAndPassword.swift; sourceTree = "<group>"; };
+		779A41C52BAD13DA00E7DD2E /* AuthWithMagicLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthWithMagicLink.swift; sourceTree = "<group>"; };
+		779A41C82BAD13DA00E7DD2E /* SignInWithApple.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SignInWithApple.swift; sourceTree = "<group>"; };
+		779A41D12BAD16A000E7DD2E /* ActionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionState.swift; sourceTree = "<group>"; };
+		779A41D62BAD17E100E7DD2E /* _Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = _Secrets.swift; sourceTree = "<group>"; };
+		779A41D82BAD188500E7DD2E /* Extras.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extras.swift; sourceTree = "<group>"; };
+		779A41DA2BAD1AFE00E7DD2E /* Moonlit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Moonlit.entitlements; sourceTree = "<group>"; };
+		779A41DE2BAD256C00E7DD2E /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
+		779A41E02BAD3AEA00E7DD2E /* GenSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenSource.swift; sourceTree = "<group>"; };
 		77A892A62BA787AB00E8F7C6 /* GridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridView.swift; sourceTree = "<group>"; };
 		77AEDBC12BA2A031008B809C /* Moonlit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Moonlit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		77AEDBC42BA2A031008B809C /* MoonlitApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlitApp.swift; sourceTree = "<group>"; };
@@ -114,6 +152,7 @@
 		77AEDBE12BA2A033008B809C /* MoonlitUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlitUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		77AEDBF02BA2ABDE008B809C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		77AEDBF62BA2D4A6008B809C /* DataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSource.swift; sourceTree = "<group>"; };
+		77B7E0122BAEA86700DE9AD4 /* LocalImage.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = LocalImage.xcdatamodel; sourceTree = "<group>"; };
 		77C2CBBC2BABBCFA000889A0 /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
 		77C2CBBE2BABC06F000889A0 /* AutoPickerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPickerModel.swift; sourceTree = "<group>"; };
 		77C2CBC02BABC772000889A0 /* PhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
@@ -126,6 +165,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				779A41B42BAD11EC00E7DD2E /* PostgREST in Frameworks */,
+				779A41DD2BAD1C5000E7DD2E /* PhoneNumberKit in Frameworks */,
+				779A41B22BAD11EC00E7DD2E /* Functions in Frameworks */,
+				779A41BA2BAD11EC00E7DD2E /* Supabase in Frameworks */,
+				779A41B02BAD11EC00E7DD2E /* Auth in Frameworks */,
+				779A41D52BAD174700E7DD2E /* CasePaths in Frameworks */,
+				779A41B82BAD11EC00E7DD2E /* Storage in Frameworks */,
+				779A41B62BAD11EC00E7DD2E /* Realtime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -180,9 +227,23 @@
 			path = CoreMLHelpers;
 			sourceTree = "<group>";
 		};
+		779A41C92BAD13DA00E7DD2E /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				779A41C22BAD13DA00E7DD2E /* AuthController.swift */,
+				779A41C32BAD13DA00E7DD2E /* AuthView.swift */,
+				779A41C42BAD13DA00E7DD2E /* AuthWithEmailAndPassword.swift */,
+				779A41C52BAD13DA00E7DD2E /* AuthWithMagicLink.swift */,
+				779A41C82BAD13DA00E7DD2E /* SignInWithApple.swift */,
+				779A41D82BAD188500E7DD2E /* Extras.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
 		77AEDBB82BA2A031008B809C = {
 			isa = PBXGroup;
 			children = (
+				77B7E0112BAEA86700DE9AD4 /* LocalImage.xcdatamodeld */,
 				77AEDBC32BA2A031008B809C /* Moonlit */,
 				77AEDBD42BA2A033008B809C /* MoonlitTests */,
 				77AEDBDE2BA2A033008B809C /* MoonlitUITests */,
@@ -203,6 +264,9 @@
 		77AEDBC32BA2A031008B809C /* Moonlit */ = {
 			isa = PBXGroup;
 			children = (
+				7713B2CC2BAEA2CC00431041 /* LocalData.swift */,
+				779A41DA2BAD1AFE00E7DD2E /* Moonlit.entitlements */,
+				779A41C92BAD13DA00E7DD2E /* Auth */,
 				77733B5C2BABBA80002E5061 /* PageModel.swift */,
 				77733B472BAB9257002E5061 /* CoreMLHelpers */,
 				774486572BA6D26A00FE87BC /* MLModels */,
@@ -210,9 +274,13 @@
 				77AEDBF02BA2ABDE008B809C /* Info.plist */,
 				77AEDBC42BA2A031008B809C /* MoonlitApp.swift */,
 				77AEDBC62BA2A031008B809C /* GalleryView.swift */,
+				779A41AC2BAD0F1100E7DD2E /* RequestManager.swift */,
+				7713B2C72BAE98D500431041 /* PaymentCheck.swift */,
+				779A41DE2BAD256C00E7DD2E /* Database.swift */,
 				77C2CBC02BABC772000889A0 /* PhotoPicker.swift */,
 				77733B5E2BABBB33002E5061 /* ContentView.swift */,
 				77AEDBF62BA2D4A6008B809C /* DataSource.swift */,
+				779A41E02BAD3AEA00E7DD2E /* GenSource.swift */,
 				77AEDBC82BA2A032008B809C /* Assets.xcassets */,
 				77AEDBCA2BA2A032008B809C /* Preview Content */,
 				774486552BA6BDE800FE87BC /* Ops.swift */,
@@ -225,6 +293,9 @@
 				772CA8322BA94E3600CE3665 /* PhotoAssetCollection.swift */,
 				77CD5EE72BAABAF0004C459A /* Utils.swift */,
 				772CA8342BA94E8000CE3665 /* PhotoAsset.swift */,
+				779A41C02BAD139800E7DD2E /* RootView.swift */,
+				779A41D12BAD16A000E7DD2E /* ActionState.swift */,
+				779A41D62BAD17E100E7DD2E /* _Secrets.swift */,
 			);
 			path = Moonlit;
 			sourceTree = "<group>";
@@ -280,6 +351,16 @@
 			dependencies = (
 			);
 			name = Moonlit;
+			packageProductDependencies = (
+				779A41AF2BAD11EC00E7DD2E /* Auth */,
+				779A41B12BAD11EC00E7DD2E /* Functions */,
+				779A41B32BAD11EC00E7DD2E /* PostgREST */,
+				779A41B52BAD11EC00E7DD2E /* Realtime */,
+				779A41B72BAD11EC00E7DD2E /* Storage */,
+				779A41B92BAD11EC00E7DD2E /* Supabase */,
+				779A41D42BAD174700E7DD2E /* CasePaths */,
+				779A41DC2BAD1C5000E7DD2E /* PhoneNumberKit */,
+			);
 			productName = Moonlit;
 			productReference = 77AEDBC12BA2A031008B809C /* Moonlit.app */;
 			productType = "com.apple.product-type.application";
@@ -352,6 +433,11 @@
 				Base,
 			);
 			mainGroup = 77AEDBB82BA2A031008B809C;
+			packageReferences = (
+				779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				779A41D32BAD174700E7DD2E /* XCRemoteSwiftPackageReference "swift-case-paths" */,
+				779A41DB2BAD1C5000E7DD2E /* XCRemoteSwiftPackageReference "PhoneNumberKit" */,
+			);
 			productRefGroup = 77AEDBC22BA2A031008B809C /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -395,6 +481,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				772CA8332BA94E3600CE3665 /* PhotoAssetCollection.swift in Sources */,
+				779A41D72BAD17E100E7DD2E /* _Secrets.swift in Sources */,
 				77733B5D2BABBA80002E5061 /* PageModel.swift in Sources */,
 				77733B502BAB9257002E5061 /* Math.swift in Sources */,
 				77733B482BAB9257002E5061 /* Array+Extensions.swift in Sources */,
@@ -409,28 +496,42 @@
 				77CD5EE82BAABAF0004C459A /* Utils.swift in Sources */,
 				772CA8372BA9509000CE3665 /* PhotoLibrary.swift in Sources */,
 				77733B582BAB9257002E5061 /* UIImage+RawBytes.swift in Sources */,
+				779A41D92BAD188500E7DD2E /* Extras.swift in Sources */,
+				7713B2C82BAE98D500431041 /* PaymentCheck.swift in Sources */,
 				77733B5F2BABBB33002E5061 /* ContentView.swift in Sources */,
 				77F0AE1E2BAAC92F00F4BA4F /* facenet_avg.mlpackage in Sources */,
 				77733B4A2BAB9257002E5061 /* CGImage+RawBytes.swift in Sources */,
 				772CA8352BA94E8000CE3665 /* PhotoAsset.swift in Sources */,
+				779A41CA2BAD13DA00E7DD2E /* AuthController.swift in Sources */,
+				779A41D02BAD13DA00E7DD2E /* SignInWithApple.swift in Sources */,
+				779A41CB2BAD13DA00E7DD2E /* AuthView.swift in Sources */,
+				7713B2CD2BAEA2CC00431041 /* LocalData.swift in Sources */,
 				77733B5A2BAB9550002E5061 /* facenet_critic.mlpackage in Sources */,
 				77733B572BAB9257002E5061 /* UIImage+Extensions.swift in Sources */,
 				77733B522BAB9257002E5061 /* MLMultiArray+Helpers.swift in Sources */,
 				77733B4F2BAB9257002E5061 /* CVPixelBuffer+Rotate.swift in Sources */,
+				779A41E12BAD3AEA00E7DD2E /* GenSource.swift in Sources */,
+				779A41DF2BAD256C00E7DD2E /* Database.swift in Sources */,
 				77AEDBC72BA2A031008B809C /* GalleryView.swift in Sources */,
 				77733B4B2BAB9257002E5061 /* CGImagePropertyOrientation.swift in Sources */,
 				774486562BA6BDE800FE87BC /* Ops.swift in Sources */,
 				77C2CBC12BABC772000889A0 /* PhotoPicker.swift in Sources */,
+				77B7E0132BAEA86700DE9AD4 /* LocalImage.xcdatamodeld in Sources */,
 				77733B4C2BAB9257002E5061 /* CoreML+Combine.swift in Sources */,
 				77733B512BAB9257002E5061 /* MLModel+Images.swift in Sources */,
+				779A41D22BAD16A000E7DD2E /* ActionState.swift in Sources */,
 				77AEDBF72BA2D4A6008B809C /* DataSource.swift in Sources */,
+				779A41C12BAD139800E7DD2E /* RootView.swift in Sources */,
 				77733B562BAB9257002E5061 /* UIImage+CVPixelBuffer.swift in Sources */,
 				77733B552BAB9257002E5061 /* Predictions.swift in Sources */,
 				77AEDBC52BA2A031008B809C /* MoonlitApp.swift in Sources */,
 				77C2CBBF2BABC06F000889A0 /* AutoPickerModel.swift in Sources */,
 				772CA8312BA94DC900CE3665 /* PhotoCollection.swift in Sources */,
+				779A41AD2BAD0F1100E7DD2E /* RequestManager.swift in Sources */,
+				779A41CD2BAD13DA00E7DD2E /* AuthWithMagicLink.swift in Sources */,
 				774486542BA6B1DC00FE87BC /* FaceNet.mlpackage in Sources */,
 				77733B492BAB9257002E5061 /* CGImage+CVPixelBuffer.swift in Sources */,
+				779A41CC2BAD13DA00E7DD2E /* AuthWithEmailAndPassword.swift in Sources */,
 				77733B542BAB9257002E5061 /* NonMaxSuppression.swift in Sources */,
 				77733B4E2BAB9257002E5061 /* CVPixelBuffer+Resize.swift in Sources */,
 			);
@@ -593,6 +694,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Moonlit/Moonlit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Moonlit/Preview Content\"";
@@ -629,6 +731,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Moonlit/Moonlit.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Moonlit/Preview Content\"";
@@ -776,6 +879,90 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
+		779A41D32BAD174700E7DD2E /* XCRemoteSwiftPackageReference "swift-case-paths" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-case-paths.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
+		779A41DB2BAD1C5000E7DD2E /* XCRemoteSwiftPackageReference "PhoneNumberKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/marmelroy/PhoneNumberKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.7.9;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		779A41AF2BAD11EC00E7DD2E /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		779A41B12BAD11EC00E7DD2E /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		779A41B32BAD11EC00E7DD2E /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		779A41B52BAD11EC00E7DD2E /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		779A41B72BAD11EC00E7DD2E /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		779A41B92BAD11EC00E7DD2E /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41AE2BAD11EC00E7DD2E /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		779A41D42BAD174700E7DD2E /* CasePaths */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41D32BAD174700E7DD2E /* XCRemoteSwiftPackageReference "swift-case-paths" */;
+			productName = CasePaths;
+		};
+		779A41DC2BAD1C5000E7DD2E /* PhoneNumberKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 779A41DB2BAD1C5000E7DD2E /* XCRemoteSwiftPackageReference "PhoneNumberKit" */;
+			productName = PhoneNumberKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+
+/* Begin XCVersionGroup section */
+		77B7E0112BAEA86700DE9AD4 /* LocalImage.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				77B7E0122BAEA86700DE9AD4 /* LocalImage.xcdatamodel */,
+			);
+			currentVersion = 77B7E0122BAEA86700DE9AD4 /* LocalImage.xcdatamodel */;
+			name = LocalImage.xcdatamodeld;
+			path = /Users/minjunes/Moonlit/LocalImage.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 77AEDBB92BA2A031008B809C /* Project object */;
 }

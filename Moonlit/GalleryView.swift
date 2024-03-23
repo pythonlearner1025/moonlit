@@ -5,20 +5,28 @@ import PhotosUI
 import CoreML
 
 struct GalleryView: View {
+    // init
+    let pickMode: PickMode
+    @Binding var displayPicker : Bool
+    let id : UUID
+    
     @ObservedObject public var data = DataSource()
+    var requestManager = RequestManager()
     @State var loaded = false
     @State var showRect = false
     @State var filtered = false
     @State var filtering = false
-    let pickMode: PickMode
     let cutoff = 15
     var done = false
     
     @State private var manualPicked = [PhotosPickerItem]()
     @State private var manualImages =  [UIImage]()
-    @Binding var displayPicker : Bool
+    
 
     @Environment(\.displayScale) private var displayScale
+    
+    //
+    @Environment(\.managedObjectContext) private var coreDataContext
     
     private static let itemSpacing = 12.0
     private static let itemCornerRadius = 15.0
@@ -32,6 +40,39 @@ struct GalleryView: View {
     private let columns = [
         GridItem(.adaptive(minimum: itemSize.width, maximum: itemSize.height), spacing: itemSpacing)
     ]
+    
+    private var selectedPhotos : [ImageFile] {
+        var result = [ImageFile]()
+        for img in data.selectedPhotos {
+            if img.selected {
+                result.append(img)
+            }
+        }
+        return result
+    }
+    
+    private func trainTest() {
+        let testPaths = ["test_img"]
+        requestManager.sendTrainRequest(testPaths, id) { result in
+            switch result {
+              case .success:
+                  print("Train request succeeded")
+              case .failure(let error):
+                  print("Train request failed with error: \(error)")
+              }        }
+    }
+    
+    private func uploadTest() {
+        print(selectedPhotos)
+        requestManager.uploadPhotos(selectedPhotos, id) { result in
+            switch result {
+                case .success:
+                    print("Upload succeeded")
+                case .failure(let error):
+                    print("Upload failed with error: \(error)")
+                }
+        }
+    }
     
     var body: some View {
             VStack {
@@ -58,10 +99,11 @@ struct GalleryView: View {
                                 HStack {
                                     Button("Generate") {
                                         // Perform generation with selectedImages
+                                            uploadTest()
+                                        }
                                     }
                                 }
                             }
-                        }
                         .sheet(isPresented: $displayPicker) {
                             PhotoPickerController(selectedImages: $manualImages)
                         }
@@ -98,6 +140,8 @@ struct GalleryView: View {
                                 HStack {
                                     Button("Generate") {
                                         // Perform generation with data.selectedPhotos
+                                        uploadTest()
+
                                     }
                                 }
                             }
@@ -126,7 +170,7 @@ struct GalleryView: View {
     
     private func imageItemView(image: ImageFile) -> some View {
        // let size = CGSize(width: 100, height: 100)
-        ImageItemView(imgFile: image, cache: data.cache, imageSize: imageSize)
+        ImageItemView(imgFile: image, filtered: filtered, cache: data.cache, imageSize: imageSize)
             .onAppear {
                 let options = PHImageRequestOptions()
                 options.deliveryMode = .opportunistic
@@ -164,7 +208,6 @@ struct GalleryView: View {
             }
             Spacer()
             Button("Remove") {
-                //showRect.toggle()
                 unSelect()
             }
             Spacer()

@@ -12,6 +12,7 @@ import Photos
 
 struct ImageItemView: View {
     @ObservedObject var imgFile: ImageFile
+    var filtered : Bool
     //@Binding var showRect: Bool
     var cache : CachedImageManager?
     var imageSize : CGSize
@@ -21,41 +22,43 @@ struct ImageItemView: View {
     private static let itemSize = CGSize(width: 90, height: 90)
     
     var body: some View {
-        VStack {
-            if let image = image {
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: Self.itemSize.width, height: Self.itemSize.height)
-                    .cornerRadius(10)
-                    .overlay{
-                        if imgFile.isTapped {
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(imgFile.isTapped ? .blue : .clear, lineWidth: imgFile.isTapped ? 4 : 0)
+        if (!filtered || imgFile.selected) {
+            VStack {
+                if let image = image {
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: Self.itemSize.width, height: Self.itemSize.height)
+                        .cornerRadius(10)
+                        .overlay{
+                            if imgFile.isTapped {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(imgFile.isTapped ? .blue : .clear, lineWidth: imgFile.isTapped ? 4 : 0)
+                            }
                         }
-                    }
-                
-            } else {
-                ProgressView()
+                    
+                } else {
+                    ProgressView()
+                }
+                //Text("\(imgFile.name) | \(imgFile.dist != nil ? imgFile.dist! : -1)").font(.custom("tiny", size: CGFloat(8)))
             }
-            Text("\(imgFile.name) | \(imgFile.dist != nil ? imgFile.dist! : -1)").font(.custom("tiny", size: CGFloat(8)))
-        }
-        .task {
-            guard image == nil, let cache = cache else { return }
-            let options = PHImageRequestOptions()
-            options.deliveryMode = .opportunistic
-            options.isNetworkAccessAllowed = true
-            await cache.requestImage(for: imgFile.asset, targetSize: imageSize, options: options) { result in
-                Task {
-                    if let result = result {
-                        let sX = CGFloat(3)
-                        let sY = CGFloat(3)
-                        // TODO should be processing faces in all bboxes, not just 1st.
-                        let box = adjustBoundingBox(imgFile.bbox[0], forImageSize: result.image.size, orientation: result.image.imageOrientation, scaleFactorX: sX, scaleFactorY: sY)
-                        let face = extractFacePixels(result.image.cgImage!, box)
-                        let img = UIImage(cgImage: face!)
-                        self.image = Image(uiImage: img)
-                        //eself.image = Image(uiImage: result.image)
+            .task {
+                guard image == nil, let cache = cache else { return }
+                let options = PHImageRequestOptions()
+                options.deliveryMode = .opportunistic
+                options.isNetworkAccessAllowed = true
+                await cache.requestImage(for: imgFile.asset, targetSize: imageSize, options: options) { result in
+                    Task {
+                        if let result = result {
+                            let sX = CGFloat(3)
+                            let sY = CGFloat(3)
+                            // TODO should be processing faces in all bboxes, not just 1st.
+                            let box = adjustBoundingBox(imgFile.bbox[0], forImageSize: result.image.size, orientation: result.image.imageOrientation, scaleFactorX: sX, scaleFactorY: sY)
+                            let face = extractFacePixels(result.image.cgImage!, box)
+                            let img = UIImage(cgImage: face!)
+                            self.image = Image(uiImage: img)
+                            //eself.image = Image(uiImage: result.image)
+                        }
                     }
                 }
             }

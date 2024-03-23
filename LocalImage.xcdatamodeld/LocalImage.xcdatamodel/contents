@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22757" systemVersion="23E214" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+    <entity name="ImageCount" representedClassName="ImageCount" syncable="YES" codeGenerationType="class">
+        <attribute name="count" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="ImagePath" representedClassName="ImagePath" syncable="YES" codeGenerationType="class">
+        <attribute name="actualPath" optional="YES" attributeType="String"/>
+        <attribute name="savePath" optional="YES" attributeType="String"/>
+    </entity>
+</model>

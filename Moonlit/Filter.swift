@@ -34,7 +34,8 @@ extension GalleryView {
             img.selected = false
         }
     }
-    
+   
+    // why this don't work sometimes?
     func unSelect() {
         for img in data.selectedPhotos {
             if img.isTapped {
@@ -50,6 +51,7 @@ extension GalleryView {
         }
         return cgImage
     }
+    
     
     func filterByPerson(_ completion: @escaping (Bool) -> Void) {
         var tapped = data.selectedPhotos.filter({ $0.isTapped })
