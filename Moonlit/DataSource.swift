@@ -243,17 +243,6 @@ extension PHAsset {
 }
 
 extension DataSource {
-    /*
-    var selectedPhotosMemorySize: Double {
-        var bytes = 0
-        for img in selectedPhotos {
-            bytes += MemoryLayout<[CGRect]>.size(ofValue: img.bbox)
-            bytes += MemoryLayout<PHAsset>.size(ofValue: img.asset)
-
-        }
-        return Double(bytes*selectedPhotos.count) / (1024 * 1024)
-    }*/
-    
     private func assessQuality(url: URL, completion: @escaping (URL?) -> Void) {
         let faceQualityRequest = VNDetectFaceCaptureQualityRequest {request, error in
             guard let results = request.results as? [VNFaceObservation], !results.isEmpty else {

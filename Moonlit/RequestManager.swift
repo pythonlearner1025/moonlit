@@ -110,9 +110,9 @@ class RequestManager {
             print("getting photo \(photo.name)")
             PHImageManager().requestImage(for: photo.asset, targetSize: sz, contentMode: .aspectFit, options: options) { image, info in
                 if let image = image, let data = image.pngData() {
-                    let fileName = photo.name
+                    let filename = NSString(string: photo.name)
                     let type = "png"
-                    let path =  "private/\(id)/train/original/\(fileName)"
+                    let path =  "private/\(id)/train/original/\(filename.deletingPathExtension).\(type)"
                     print("uploading \(photo.name) to path: \(path)")
                     
                     // todo access control: https://supabase.com/docs/guides/storage/security/access-control
